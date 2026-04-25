@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -161,6 +162,18 @@ class FlywayInitialSchemaTest {
         }
     }
 
+    @Test
+    void insertsInitialProviderRoutingPolicies() throws SQLException {
+        migrate();
+
+        try (Connection connection = openConnection()) {
+            assertThat(latestRoutingPolicies(connection)).containsExactlyInAnyOrderEntriesOf(Map.of(
+                    "KG", new RoutingPolicy(10, true, 1L),
+                    "NICE", new RoutingPolicy(90, true, 1L)
+            ));
+        }
+    }
+
     private static void migrate() {
         Flyway.configure()
                 .dataSource(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
@@ -234,6 +247,32 @@ class FlywayInitialSchemaTest {
         }
     }
 
+    private static Map<String, RoutingPolicy> latestRoutingPolicies(Connection connection) throws SQLException {
+        String sql = """
+                SELECT provider, weight, enabled, version
+                FROM provider_routing_policy
+                WHERE version = (
+                    SELECT MAX(version)
+                    FROM provider_routing_policy
+                )
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            Stream.Builder<Map.Entry<String, RoutingPolicy>> values = Stream.builder();
+            while (resultSet.next()) {
+                values.add(Map.entry(
+                        resultSet.getString("provider"),
+                        new RoutingPolicy(
+                                resultSet.getInt("weight"),
+                                resultSet.getBoolean("enabled"),
+                                resultSet.getLong("version")
+                        )
+                ));
+            }
+            return values.build().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+    }
+
     private static String columnType(Connection connection, String tableName, String columnName) throws SQLException {
         try (ResultSet resultSet = connection.getMetaData().getColumns(MYSQL.getDatabaseName(), null, tableName, columnName)) {
             resultSet.next();
@@ -254,5 +293,8 @@ class FlywayInitialSchemaTest {
             values.add(resultSet.getString(columnName));
         }
         return values.build().collect(Collectors.toSet());
+    }
+
+    private record RoutingPolicy(int weight, boolean enabled, long version) {
     }
 }
