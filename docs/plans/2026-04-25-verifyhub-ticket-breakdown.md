@@ -267,15 +267,18 @@
 **Dependencies:** VH-010, VH-015
 
 **Scope**
-- `ProviderClientPort`, `ProviderRequest`, `ProviderRequestResult`, `ProviderCallback`을 구현한다.
+- `ProviderClientPort`, `ProviderRequest`, `ProviderRequestResult`, `ProviderResultRequest`, `ProviderResult`를 구현한다.
 - `verification.adapter.out.provider.kg.KgMockProviderClient`, `verification.adapter.out.provider.nice.NiceMockProviderClient`를 구현한다.
 - Provider client는 내부 메서드를 직접 호출하지 않고 설정된 base url의 mock provider HTTP API를 호출한다.
 - provider base url은 `verifyhub.provider.kg.base-url`, `verifyhub.provider.nice.base-url` 설정으로 분리한다.
+- NICE 표준창 방식에 맞춰 requestVerification 결과는 `authUrl`, `transactionId`, `requestNo`를 표현할 수 있게 한다.
+- Provider client는 return_url에서 받은 `webTransactionId`로 provider 결과 조회를 수행할 수 있어야 한다.
 
 **Acceptance Criteria**
 - 실제 KG/NICE API를 호출하지 않는다.
 - 같은 앱 안의 `/mock/providers/{provider}/verifications` HTTP endpoint를 호출해 HTTP status, latency, timeout, retry, circuit breaker를 검증할 수 있다.
 - provider 응답은 provider call history 저장에 필요한 raw response, http status, latency, error 정보를 포함한다.
+- NICE 결과 조회 응답의 무결성 검증/복호화 실패는 retry 대상이 아닌 business/security fail로 분류할 수 있다.
 
 ### VH-018. Resilience4j 설정 적용
 
@@ -302,7 +305,7 @@
 **Scope**
 - provider call 시작 시 `IN_PROGRESS`로 전이한다.
 - 즉시 성공/실패 mock scenario는 상태에 반영한다.
-- callback 기반 scenario는 `IN_PROGRESS`를 유지한다.
+- NICE 표준창 기반 scenario는 `authUrl` 반환 후 `IN_PROGRESS`를 유지한다.
 - provider call history와 outbox event를 저장한다.
 
 **Acceptance Criteria**
@@ -353,51 +356,52 @@
 **Acceptance Criteria**
 - `VerificationFlowIntegrationTest`가 Testcontainers MySQL 기반으로 통과한다.
 
-## Milestone 7. Callback and Late Callback
+## Milestone 7. Provider Return and Late Result
 
-### VH-023. Provider Callback API 구현
+### VH-023. Provider Return URL 및 Result Retrieval 구현
 
 **Type:** Feature  
 **Priority:** P0  
 **Dependencies:** VH-011, VH-019
 
 **Scope**
-- `POST /api/v1/providers/{provider}/callbacks`를 구현한다.
-- path provider 검증, signature 검증, verification 조회를 수행한다.
-- `IN_PROGRESS` 상태에서 SUCCESS/FAIL callback을 상태 전이에 반영한다.
+- `GET/POST /api/v1/providers/{provider}/returns`를 구현한다.
+- path provider 검증, `webTransactionId` 수신, verification 조회를 수행한다.
+- `IN_PROGRESS` 상태에서 provider adapter로 인증 결과를 조회한다.
+- NICE 응답의 `integrity_value`를 검증하고 `enc_data`를 복호화한 뒤 SUCCESS/FAIL 상태 전이에 반영한다.
 
 **Acceptance Criteria**
-- invalid signature는 상태를 변경하지 않는다.
-- 정상 callback은 history와 outbox event를 저장한다.
+- 무결성 검증 실패 또는 복호화 실패는 상태 오염 없이 FAIL 또는 보안 실패 이력으로 기록된다.
+- 정상 return/result 처리는 history와 outbox event를 저장한다.
 
-### VH-024. Late/Duplicate Callback 정책 구현
+### VH-024. Late/Duplicate Return Result 정책 구현
 
 **Type:** Feature  
 **Priority:** P0  
 **Dependencies:** VH-023
 
 **Scope**
-- terminal 상태에서 도착한 callback은 상태를 변경하지 않는다.
-- late callback history에 기존 상태, callback 결과, provider, raw payload, reason을 저장한다.
-- providerTransactionId 기준 중복 callback 여부를 판정한다.
+- terminal 상태에서 도착한 return_url 또는 결과 조회 요청은 상태를 변경하지 않는다.
+- late callback history에 기존 상태, provider 결과, provider, raw payload, reason을 저장한다.
+- webTransactionId 또는 providerTransactionId 기준 중복 여부를 판정한다.
 - optimistic lock 충돌 시 재조회 후 terminal 여부를 다시 확인한다.
 
 **Acceptance Criteria**
-- `TIMEOUT` 이후 `SUCCESS` callback이 와도 상태는 `TIMEOUT`으로 유지된다.
-- 중복 callback은 `duplicate=true`로 기록된다.
+- `TIMEOUT` 이후 `SUCCESS` 결과가 조회되어도 상태는 `TIMEOUT`으로 유지된다.
+- 중복 return/result는 `duplicate=true`로 기록된다.
 
-### VH-025. Callback 단위/통합 테스트 작성
+### VH-025. Provider Return/Result 단위/통합 테스트 작성
 
 **Type:** Test  
 **Priority:** P0  
 **Dependencies:** VH-024
 
 **Scope**
-- `CallbackApplicationServiceTest`와 `LateCallbackIntegrationTest`를 작성한다.
-- 성공, 실패, timeout 이후 late callback, duplicate callback, invalid signature를 검증한다.
+- `ProviderResultApplicationServiceTest`와 `LateCallbackIntegrationTest`를 작성한다.
+- 성공, 실패, timeout 이후 late return/result, duplicate return/result, integrity 검증 실패를 검증한다.
 
 **Acceptance Criteria**
-- `ARCHITECTURE.md`의 callback 테스트 요구사항이 모두 통과한다.
+- `ARCHITECTURE.md`의 return/result 테스트 요구사항이 모두 통과한다.
 
 ## Milestone 8. Admin and Operations
 
@@ -440,9 +444,11 @@
 **Scope**
 - `mockprovider` bounded context를 구현한다.
 - `POST /mock/providers/{provider}/verifications`를 구현한다.
+- `GET/POST /mock/providers/{provider}/returns`를 구현한다.
+- `POST /mock/providers/{provider}/results`를 구현한다.
 - `POST /mock/providers/{provider}/scenario`를 구현한다.
 - provider별 scenario 상태를 변경할 수 있게 한다.
-- scenario별 `SUCCESS`, `FAIL`, `TIMEOUT`, `HTTP_500`, `DELAYED_CALLBACK`, `DUPLICATE_CALLBACK`, `INVALID_SIGNATURE_CALLBACK` 동작을 지원한다.
+- scenario별 `SUCCESS`, `FAIL`, `TIMEOUT`, `HTTP_500`, `DELAYED_RETURN`, `DUPLICATE_RETURN`, `INVALID_INTEGRITY_RESULT` 동작을 지원한다.
 
 **Acceptance Criteria**
 - Mock Provider API는 `verification` application service를 직접 호출하지 않는다.
