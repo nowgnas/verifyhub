@@ -149,6 +149,24 @@ class VerificationTest {
     }
 
     @Test
+    void cancelsRequestedVerification() {
+        Verification verification = Verification.requested(
+                "verif_123",
+                "user-123",
+                VerificationPurpose.SIGN_UP,
+                "idem-123",
+                LocalDateTime.of(2026, 4, 25, 12, 0)
+        );
+
+        LocalDateTime completedAt = LocalDateTime.of(2026, 4, 25, 12, 5);
+
+        verification.cancel(completedAt);
+
+        assertThat(verification.getStatus()).isEqualTo(VerificationStatus.CANCELED);
+        assertThat(verification.getCompletedAt()).isEqualTo(completedAt);
+    }
+
+    @Test
     void rejectsInvalidRehydratedInProgressVerificationWithoutProviderTransactionId() {
         assertThatThrownBy(() -> Verification.rehydrate(
                 10L,

@@ -126,40 +126,42 @@ public class Verification {
     }
 
     public void routeTo(ProviderType provider, Long routingPolicyVersion, LocalDateTime routedAt) {
-        requireStatus(VerificationStatus.REQUESTED);
+        VerificationStatus nextStatus = VerificationStateMachine.transit(status, VerificationEvent.ROUTE_SELECTED);
         this.provider = Objects.requireNonNull(provider, "provider must not be null");
         this.routingPolicyVersion = Objects.requireNonNull(routingPolicyVersion, "routingPolicyVersion must not be null");
         this.routedAt = Objects.requireNonNull(routedAt, "routedAt must not be null");
-        this.status = VerificationStatus.ROUTED;
+        this.status = nextStatus;
     }
 
     public void startProviderCall(String providerTransactionId, String providerRequestNo, LocalDateTime providerCalledAt) {
-        requireStatus(VerificationStatus.ROUTED);
+        VerificationStatus nextStatus = VerificationStateMachine.transit(status, VerificationEvent.PROVIDER_CALL_STARTED);
         this.providerTransactionId = requireText(providerTransactionId, "providerTransactionId");
         this.providerRequestNo = requireText(providerRequestNo, "providerRequestNo");
         this.providerCalledAt = Objects.requireNonNull(providerCalledAt, "providerCalledAt must not be null");
-        this.status = VerificationStatus.IN_PROGRESS;
+        this.status = nextStatus;
     }
 
     public void recordProviderReturn(String webTransactionId) {
-        requireStatus(VerificationStatus.IN_PROGRESS);
+        if (status != VerificationStatus.IN_PROGRESS) {
+            throw new IllegalStateException("verification status must be " + VerificationStatus.IN_PROGRESS + " but was " + status);
+        }
         this.webTransactionId = requireText(webTransactionId, "webTransactionId");
     }
 
     public void succeed(LocalDateTime completedAt) {
-        complete(VerificationStatus.SUCCESS, completedAt);
+        complete(VerificationEvent.PROVIDER_CALL_SUCCEEDED, completedAt);
     }
 
     public void fail(LocalDateTime completedAt) {
-        complete(VerificationStatus.FAIL, completedAt);
+        complete(VerificationEvent.PROVIDER_CALL_FAILED, completedAt);
     }
 
     public void timeout(LocalDateTime completedAt) {
-        complete(VerificationStatus.TIMEOUT, completedAt);
+        complete(VerificationEvent.PROVIDER_TIMEOUT, completedAt);
     }
 
     public void cancel(LocalDateTime completedAt) {
-        complete(VerificationStatus.CANCELED, completedAt);
+        complete(VerificationEvent.CANCEL_REQUESTED, completedAt);
     }
 
     public boolean isTerminal() {
@@ -230,19 +232,10 @@ public class Verification {
         return version;
     }
 
-    private void complete(VerificationStatus targetStatus, LocalDateTime completedAt) {
-        if (!targetStatus.isTerminal()) {
-            throw new IllegalArgumentException("targetStatus must be terminal");
-        }
-        requireStatus(VerificationStatus.IN_PROGRESS);
+    private void complete(VerificationEvent event, LocalDateTime completedAt) {
+        VerificationStatus nextStatus = VerificationStateMachine.transit(status, event);
         this.completedAt = Objects.requireNonNull(completedAt, "completedAt must not be null");
-        this.status = targetStatus;
-    }
-
-    private void requireStatus(VerificationStatus expectedStatus) {
-        if (status != expectedStatus) {
-            throw new IllegalStateException("verification status must be " + expectedStatus + " but was " + status);
-        }
+        this.status = nextStatus;
     }
 
     private void validateSnapshot() {
