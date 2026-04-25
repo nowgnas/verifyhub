@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 2. Persistence and Initial Schema
-- Next ticket: VH-008. Flyway V2 초기 라우팅 정책 데이터 작성
+- Next ticket: VH-009. JPA Entity, Repository, Mapper 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -105,7 +105,13 @@
     - unique keys and indexes
   - Verification:
     - `FlywayInitialSchemaTest`
-- [ ] **VH-008. Flyway V2 초기 라우팅 정책 데이터 작성**
+- [x] **VH-008. Flyway V2 초기 라우팅 정책 데이터 작성**
+  - Done:
+    - `V2__insert_initial_provider_routing_policy.sql`
+    - KG weight 10 enabled true version 1
+    - NICE weight 90 enabled true version 1
+  - Verification:
+    - `FlywayInitialSchemaTest`
 - [ ] **VH-009. JPA Entity, Repository, Mapper 구현**
 
 ## Milestone 3. Application Services
