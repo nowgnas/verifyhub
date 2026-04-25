@@ -77,6 +77,73 @@ public class Verification {
         );
     }
 
+    public static Verification rehydrate(
+            Long id,
+            String verificationId,
+            String userId,
+            VerificationPurpose purpose,
+            String idempotencyKey,
+            ProviderType provider,
+            VerificationStatus status,
+            String providerTransactionId,
+            Long routingPolicyVersion,
+            LocalDateTime requestedAt,
+            LocalDateTime routedAt,
+            LocalDateTime providerCalledAt,
+            LocalDateTime completedAt,
+            Long version
+    ) {
+        Verification verification = new Verification(
+                id,
+                verificationId,
+                userId,
+                purpose,
+                idempotencyKey,
+                provider,
+                status,
+                providerTransactionId,
+                routingPolicyVersion,
+                requestedAt,
+                routedAt,
+                providerCalledAt,
+                completedAt,
+                version
+        );
+        verification.validateSnapshot();
+        return verification;
+    }
+
+    public void routeTo(ProviderType provider, Long routingPolicyVersion, LocalDateTime routedAt) {
+        requireStatus(VerificationStatus.REQUESTED);
+        this.provider = Objects.requireNonNull(provider, "provider must not be null");
+        this.routingPolicyVersion = Objects.requireNonNull(routingPolicyVersion, "routingPolicyVersion must not be null");
+        this.routedAt = Objects.requireNonNull(routedAt, "routedAt must not be null");
+        this.status = VerificationStatus.ROUTED;
+    }
+
+    public void startProviderCall(String providerTransactionId, LocalDateTime providerCalledAt) {
+        requireStatus(VerificationStatus.ROUTED);
+        this.providerTransactionId = requireText(providerTransactionId, "providerTransactionId");
+        this.providerCalledAt = Objects.requireNonNull(providerCalledAt, "providerCalledAt must not be null");
+        this.status = VerificationStatus.IN_PROGRESS;
+    }
+
+    public void succeed(LocalDateTime completedAt) {
+        complete(VerificationStatus.SUCCESS, completedAt);
+    }
+
+    public void fail(LocalDateTime completedAt) {
+        complete(VerificationStatus.FAIL, completedAt);
+    }
+
+    public void timeout(LocalDateTime completedAt) {
+        complete(VerificationStatus.TIMEOUT, completedAt);
+    }
+
+    public void cancel(LocalDateTime completedAt) {
+        complete(VerificationStatus.CANCELED, completedAt);
+    }
+
     public boolean isTerminal() {
         return status.isTerminal();
     }
@@ -137,10 +204,70 @@ public class Verification {
         return version;
     }
 
+    private void complete(VerificationStatus targetStatus, LocalDateTime completedAt) {
+        if (!targetStatus.isTerminal()) {
+            throw new IllegalArgumentException("targetStatus must be terminal");
+        }
+        requireStatus(VerificationStatus.IN_PROGRESS);
+        this.completedAt = Objects.requireNonNull(completedAt, "completedAt must not be null");
+        this.status = targetStatus;
+    }
+
+    private void requireStatus(VerificationStatus expectedStatus) {
+        if (status != expectedStatus) {
+            throw new IllegalStateException("verification status must be " + expectedStatus + " but was " + status);
+        }
+    }
+
+    private void validateSnapshot() {
+        if (status == VerificationStatus.REQUESTED) {
+            requireNull(provider, "provider");
+            requireNull(providerTransactionId, "providerTransactionId");
+            requireNull(routingPolicyVersion, "routingPolicyVersion");
+            requireNull(routedAt, "routedAt");
+            requireNull(providerCalledAt, "providerCalledAt");
+            requireNull(completedAt, "completedAt");
+            return;
+        }
+
+        requireNotNull(provider, "provider");
+        requireNotNull(routingPolicyVersion, "routingPolicyVersion");
+        requireNotNull(routedAt, "routedAt");
+
+        if (status == VerificationStatus.ROUTED) {
+            requireNull(providerTransactionId, "providerTransactionId");
+            requireNull(providerCalledAt, "providerCalledAt");
+            requireNull(completedAt, "completedAt");
+            return;
+        }
+
+        requireText(providerTransactionId, "providerTransactionId");
+        requireNotNull(providerCalledAt, "providerCalledAt");
+
+        if (status == VerificationStatus.IN_PROGRESS) {
+            requireNull(completedAt, "completedAt");
+            return;
+        }
+
+        requireNotNull(completedAt, "completedAt");
+    }
+
     private static String requireText(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " must not be blank");
         }
         return value;
+    }
+
+    private static void requireNotNull(Object value, String fieldName) {
+        if (value == null) {
+            throw new IllegalArgumentException(fieldName + " must not be null");
+        }
+    }
+
+    private static void requireNull(Object value, String fieldName) {
+        if (value != null) {
+            throw new IllegalArgumentException(fieldName + " must be null");
+        }
     }
 }
