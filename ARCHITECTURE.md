@@ -25,7 +25,7 @@
 - 선택된 Provider Adapter를 통해 인증 요청을 전달한다.
 - Provider는 Mock API로 동작하며 성공, 실패, 지연, 타임아웃, 중복 콜백, 늦은 콜백을 시뮬레이션할 수 있다.
 - 인증 요청 상태는 상태 머신을 통해서만 변경된다.
-- 종료 상태 이후 도착한 콜백은 최종 상태를 변경하지 않고 late callback history로 기록한다.
+- 종료 상태 이후 도착한 return_url 또는 결과 조회는 최종 상태를 변경하지 않고 late callback history로 기록한다.
 - 모든 요청/응답/상태전이/콜백은 추적 가능해야 한다.
 
 기술 스택:
@@ -76,10 +76,11 @@ Client
 -> OutboxEventPort
 -> MySQL
 
-Provider Callback
--> ProviderCallbackController
--> CallbackApplicationService
--> SignatureVerifier
+Provider Return URL / Result Retrieval
+-> ProviderReturnController
+-> ProviderResultApplicationService
+-> ProviderResultVerifier
+-> ProviderClientPort
 -> VerificationStateService
 -> VerificationHistoryService
 -> LateCallbackHistoryService
@@ -105,7 +106,7 @@ OutboxEvent
 application
 VerificationCommandService
 VerificationQueryService
-CallbackApplicationService
+ProviderResultApplicationService
 VerificationStateService
 VerificationHistoryService
 ProviderCallHistoryService
@@ -114,7 +115,7 @@ port
 in
 RequestVerificationUseCase
 QueryVerificationUseCase
-HandleProviderCallbackUseCase
+HandleProviderReturnUseCase
 out
 VerificationRepositoryPort
 VerificationHistoryRepositoryPort
@@ -128,7 +129,7 @@ adapter
 in
 web
 VerificationController
-ProviderCallbackController
+ProviderReturnController
 AdminVerificationController
 dto
 out
@@ -235,12 +236,12 @@ VerificationEvent:
 - TIMEOUT
 - CANCELED
 
-종료 상태 이후 콜백 정책:
+종료 상태 이후 return/result 정책:
 
-- 이미 SUCCESS, FAIL, TIMEOUT, CANCELED 상태인 인증 요청에 콜백이 도착하면 상태를 변경하지 않는다.
+- 이미 SUCCESS, FAIL, TIMEOUT, CANCELED 상태인 인증 요청에 return_url 또는 결과 조회 요청이 도착하면 상태를 변경하지 않는다.
 - late_callback_history 테이블에 저장한다.
-- 기존 상태, 콜백 결과, provider, raw payload, reason을 기록한다.
-- 중복 콜백도 상태를 변경하지 않고 duplicate 여부를 기록한다.
+- 기존 상태, provider 결과, provider, raw payload, reason을 기록한다.
+- 중복 return_url 수신이나 중복 결과 조회도 상태를 변경하지 않고 duplicate 여부를 기록한다.
 - 운영자가 추적할 수 있도록 조회 API를 제공한다.
 
 Provider:
@@ -255,8 +256,19 @@ Mock Provider 구현 정책:
 - 오케스트레이터의 provider outbound adapter는 내부 메서드를 직접 호출하지 않고 HTTP client로 mock provider API를 호출한다.
 - 이를 통해 실제 외부 연동과 같은 HTTP status, latency, timeout, retry, circuit breaker 동작을 검증한다.
 - `verification.adapter.out.provider.kg`와 `verification.adapter.out.provider.nice`는 외부 Provider 호출 client 역할만 담당한다.
-- `mockprovider` 패키지는 KG/NICE가 제공한다고 가정하는 fake API, scenario 저장/조회, 지연/오류/중복 callback 시뮬레이션만 담당한다.
+- `mockprovider` 패키지는 KG/NICE가 제공한다고 가정하는 fake API, scenario 저장/조회, 지연/오류/중복 return_url/result 시뮬레이션만 담당한다.
 - provider base url은 설정으로 분리한다.
+
+NICE 표준창 기반 본인인증 정책:
+
+- NICE는 순수 server-to-server 단일 호출이 아니라 표준창을 포함한다.
+- Provider adapter는 NICE `/ido/intc/v1.0/auth/token` 호출로 access_token, ticket, iterators를 받고, `/ido/intc/v1.0/auth/url` 호출로 auth_url, transaction_id, request_no를 받는다.
+- verifyhub는 Client에게 `authUrl`을 반환하고, Client는 해당 URL로 NICE 표준창을 연다.
+- 사용자가 표준창에서 개인정보를 입력하고 인증을 완료하면 NICE 표준창은 verifyhub의 `return_url`로 `web_transaction_id`를 전달한다.
+- verifyhub는 `web_transaction_id`, `transaction_id`, `request_no`로 NICE `/ido/intc/v1.0/auth/result`를 호출한다.
+- 결과 응답의 `integrity_value`를 검증하고 `enc_data`를 AES/GCM으로 복호화한 뒤 성공/실패 상태를 반영한다.
+- 복호화된 name, birthdate, mobile_no 등 개인정보는 DB에 저장하지 않는다.
+- 무결성 검증 실패, 복호화 실패, 인증 실패 결과는 retry 대상이 아니라 business/security fail로 처리한다.
 
 provider base url 예시:
 
@@ -481,7 +493,7 @@ Response:
 10. provider adapter 호출
 11. provider 호출 결과 저장
 12. provider가 즉시 성공/실패를 반환하는 mock scenario면 상태 반영
-13. callback 기반 scenario면 IN_PROGRESS 유지
+13. NICE 표준창 기반 scenario면 authUrl 반환 후 IN_PROGRESS 유지
 14. outbox event 저장
 
 15. 인증 상태 조회
@@ -514,30 +526,30 @@ Response:
 ]
 }
 
-4. Provider Callback
-   POST /api/v1/providers/{provider}/callbacks
+4. Provider Return URL 수신
+   GET 또는 POST /api/v1/providers/{provider}/returns
 
 Request:
 {
-"providerTransactionId": "nice-tx-123",
 "verificationId": "verif_01HX...",
-"result": "SUCCESS",
-"signature": "..."
+"webTransactionId": "ZGIxOGZkYjUtMjE4NC00MDZmLTkxZjgtM2ZhNjA0OTdiZTY2"
 }
 
 처리 흐름:
 
 1. provider path variable 검증
-2. callback signature 검증
-3. verification 조회
-4. providerTransactionId 중복 여부 확인
-5. 현재 상태가 terminal이면 late_callback_history 저장 후 200 반환
-6. IN_PROGRESS 상태면 result에 따라 SUCCESS 또는 FAIL 전이
-7. history 저장
-8. outbox event 저장
-9. metrics 증가
+2. verification 조회
+3. webTransactionId 중복 여부 확인
+4. 현재 상태가 terminal이면 late_callback_history 저장 후 200 반환
+5. IN_PROGRESS 상태면 provider adapter를 통해 인증 결과 요청
+6. NICE 응답의 integrity_value 검증
+7. enc_data 복호화
+8. 인증 결과에 따라 SUCCESS 또는 FAIL 전이
+9. history 저장
+10. outbox event 저장
+11. metrics 증가
 
-10. 관리자 재처리
+5. 관리자 재처리
     POST /admin/v1/verifications/{verificationId}/retry
 
 정책:
@@ -589,9 +601,9 @@ Request:
 - FAIL
 - TIMEOUT
 - HTTP_500
-- DELAYED_CALLBACK
-- DUPLICATE_CALLBACK
-- INVALID_SIGNATURE_CALLBACK
+- DELAYED_RETURN
+- DUPLICATE_RETURN
+- INVALID_INTEGRITY_RESULT
 
 Mock Provider 동작:
 
@@ -601,9 +613,9 @@ Mock Provider 동작:
 - FAIL: 즉시 실패 응답
 - TIMEOUT: 2초 이상 지연하여 TimeLimiter 유도
 - HTTP_500: 500 응답
-- DELAYED_CALLBACK: 최초 요청은 accepted로 받고, 별도 endpoint 또는 scheduled task로 늦은 callback 발생
-- DUPLICATE_CALLBACK: 같은 callback을 2번 발생
-- INVALID_SIGNATURE_CALLBACK: 잘못된 signature로 callback 발생
+- DELAYED_RETURN: 최초 요청은 authUrl accepted로 받고, return_url 수신 또는 결과 조회를 지연
+- DUPLICATE_RETURN: 같은 webTransactionId return을 2번 발생
+- INVALID_INTEGRITY_RESULT: 결과 조회 응답의 integrity_value 검증 실패를 시뮬레이션
 
 도메인 클래스 설계:
 
@@ -618,6 +630,9 @@ Verification:
 - provider
 - status
 - providerTransactionId
+- providerRequestNo
+- providerAuthUrl
+- webTransactionId
 - routingPolicyVersion
 - requestedAt
 - routedAt
@@ -651,14 +666,14 @@ VerificationStatus transit(VerificationStatus current, VerificationEvent event)
 
 - InvalidStateTransitionException 발생
 - history에는 실패한 전이를 저장하지 않는다.
-- 단 late callback은 별도 저장한다.
+- 단 late return/result는 별도 저장한다.
 
 Provider Port:
 
 interface ProviderClientPort {
 ProviderType providerType();
 ProviderRequestResult requestVerification(ProviderRequest request);
-boolean verifyCallbackSignature(ProviderCallback callback);
+ProviderResult requestResult(ProviderResultRequest request);
 }
 
 ProviderRequest:
@@ -674,6 +689,8 @@ ProviderRequestResult:
 
 - provider
 - providerTransactionId
+- providerRequestNo
+- authUrl
 - resultType
   - ACCEPTED
   - SUCCESS
@@ -685,13 +702,21 @@ ProviderRequestResult:
 - latencyMs
 - errorMessage
 
-Callback:
+ProviderResultRequest:
+
+- provider
+- providerTransactionId
+- providerRequestNo
+- verificationId
+- webTransactionId
+
+ProviderResult:
 
 - provider
 - providerTransactionId
 - verificationId
 - result
-- signature
+- integrityVerified
 - rawPayload
 
 Routing Strategy:
@@ -880,8 +905,8 @@ V1\_\_create_verification_tables.sql
 12. Mock Provider Client 구현
 13. Resilience4j 적용
 14. Provider call history 저장
-15. CallbackApplicationService 구현
-16. Late callback 정책 구현
+15. ProviderResultApplicationService 구현
+16. Late return/result 정책 구현
 17. REST Controller 구현
 18. Admin API 구현
 19. Metrics 구현
@@ -916,13 +941,13 @@ V1\_\_create_verification_tables.sql
 - 동일 idempotency key 요청 시 기존 verification 반환
 - 다른 idempotency key 요청 시 신규 생성
 
-4. CallbackApplicationServiceTest
+4. ProviderResultApplicationServiceTest
 
-- IN_PROGRESS 상태에서 SUCCESS callback 수신 시 SUCCESS 전이
-- IN_PROGRESS 상태에서 FAIL callback 수신 시 FAIL 전이
-- TIMEOUT 상태에서 SUCCESS callback 수신 시 상태 변경하지 않고 late callback 저장
-- duplicate callback 수신 시 상태 변경하지 않고 duplicate 기록
-- invalid signature면 상태 변경하지 않음
+- IN_PROGRESS 상태에서 SUCCESS result 조회 시 SUCCESS 전이
+- IN_PROGRESS 상태에서 FAIL result 조회 시 FAIL 전이
+- TIMEOUT 상태에서 SUCCESS result 조회 시 상태 변경하지 않고 late history 저장
+- duplicate return/result 수신 시 상태 변경하지 않고 duplicate 기록
+- integrity 검증 실패면 상태 오염 없이 실패 이력 기록
 
 통합 테스트:
 
@@ -953,7 +978,7 @@ V1\_\_create_verification_tables.sql
 5. LateCallbackIntegrationTest
 
 - TIMEOUT 상태 생성
-- 이후 SUCCESS callback 전송
+- 이후 SUCCESS result 조회
 - verification status는 TIMEOUT 유지
 - late_callback_history 저장 확인
 

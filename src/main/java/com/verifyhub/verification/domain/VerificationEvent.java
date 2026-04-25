@@ -1,0 +1,13 @@
+package com.verifyhub.verification.domain;
+
+public enum VerificationEvent {
+    VERIFICATION_REQUESTED,
+    ROUTE_SELECTED,
+    PROVIDER_CALL_STARTED,
+    PROVIDER_CALL_SUCCEEDED,
+    PROVIDER_CALL_FAILED,
+    PROVIDER_TIMEOUT,
+    CALLBACK_SUCCESS,
+    CALLBACK_FAIL,
+    CANCEL_REQUESTED
+}

@@ -11,8 +11,8 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 1. Domain Core
-- Next ticket: VH-004. Verification 도메인 enum 및 모델 구현
-- Last verified command: `./gradlew clean test --no-daemon`
+- Next ticket: VH-005. VerificationStateMachine 구현
+- Last verified command: `./gradlew test --tests '*verification.domain*' --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
 ## Milestone 0. Project Bootstrap
@@ -57,17 +57,25 @@
 
 ## Milestone 1. Domain Core
 
-- [ ] **VH-004. Verification 도메인 enum 및 모델 구현**
-  - Next actions:
+- [x] **VH-004. Verification 도메인 enum 및 모델 구현**
+  - Done:
     - `VerificationStatus`
     - `VerificationEvent`
     - `VerificationPurpose`
     - `ProviderType`
-    - 핵심 domain model 초안
+    - `Verification`
+    - `VerificationHistory`
+    - `ProviderCallHistory`
+    - `LateCallbackHistory`
+    - `OutboxEvent`
+    - 개인정보 필드 미포함 검증
+  - Verification:
+    - `./gradlew test --tests '*verification.domain*' --no-daemon`
 
 - [ ] **VH-005. VerificationStateMachine 구현**
-  - Blocked by:
-    - VH-004
+  - Next actions:
+    - 상태 전이 테스트 작성
+    - `VerificationStateMachine.transit(current, event)` 구현
 
 - [ ] **VH-006. StateMachine 단위 테스트 작성**
   - Blocked by:
@@ -110,11 +118,11 @@
 - [ ] **VH-021. 인증 조회 및 이력 조회 API 구현**
 - [ ] **VH-022. VerificationFlow 통합 테스트 작성**
 
-## Milestone 7. Callback and Late Callback
+## Milestone 7. Provider Return and Late Result
 
-- [ ] **VH-023. Provider Callback API 구현**
-- [ ] **VH-024. Late/Duplicate Callback 정책 구현**
-- [ ] **VH-025. Callback 단위/통합 테스트 작성**
+- [ ] **VH-023. Provider Return URL 및 Result Retrieval 구현**
+- [ ] **VH-024. Late/Duplicate Return Result 정책 구현**
+- [ ] **VH-025. Provider Return/Result 단위/통합 테스트 작성**
 
 ## Milestone 8. Admin and Operations
 
@@ -126,6 +134,8 @@
     - KG/NICE provider client 패키지와 mock provider API 책임 분리 문서화
   - Remaining:
     - `/mock/providers/{provider}/verifications`
+    - `/mock/providers/{provider}/returns`
+    - `/mock/providers/{provider}/results`
     - `/mock/providers/{provider}/scenario`
     - scenario service 구현
 
