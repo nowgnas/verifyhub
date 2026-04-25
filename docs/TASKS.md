@@ -10,9 +10,9 @@
 
 ## Current Snapshot
 
-- Current milestone: Milestone 1. Domain Core
-- Next ticket: VH-005. VerificationStateMachine 구현
-- Last verified command: `./gradlew test --tests '*verification.domain*' --no-daemon`
+- Current milestone: Milestone 2. Persistence and Migration
+- Next ticket: VH-007. Flyway V1 인증 테이블 마이그레이션 작성
+- Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
 ## Milestone 0. Project Bootstrap
@@ -72,14 +72,22 @@
   - Verification:
     - `./gradlew test --tests '*verification.domain*' --no-daemon`
 
-- [ ] **VH-005. VerificationStateMachine 구현**
-  - Next actions:
-    - 상태 전이 테스트 작성
+- [x] **VH-005. VerificationStateMachine 구현**
+  - Done:
     - `VerificationStateMachine.transit(current, event)` 구현
+    - 허용/금지 전이 규칙 반영
+    - terminal 상태 이후 모든 전이 거부
+    - `Verification` aggregate 상태 변경 메서드에서 state machine 사용
+  - Verification:
+    - `VerificationStateMachineTest`
 
-- [ ] **VH-006. StateMachine 단위 테스트 작성**
-  - Blocked by:
-    - VH-005
+- [x] **VH-006. StateMachine 단위 테스트 작성**
+  - Done:
+    - 허용 전이 테스트
+    - 금지 전이 테스트
+    - terminal 상태 전이 거부 테스트
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.verification.domain.VerificationStateMachineTest --no-daemon`
 
 ## Milestone 2. Persistence and Migration
 
