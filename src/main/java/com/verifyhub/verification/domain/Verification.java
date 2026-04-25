@@ -13,6 +13,8 @@ public class Verification {
     private ProviderType provider;
     private VerificationStatus status;
     private String providerTransactionId;
+    private String providerRequestNo;
+    private String webTransactionId;
     private Long routingPolicyVersion;
     private final LocalDateTime requestedAt;
     private LocalDateTime routedAt;
@@ -29,6 +31,8 @@ public class Verification {
             ProviderType provider,
             VerificationStatus status,
             String providerTransactionId,
+            String providerRequestNo,
+            String webTransactionId,
             Long routingPolicyVersion,
             LocalDateTime requestedAt,
             LocalDateTime routedAt,
@@ -44,6 +48,8 @@ public class Verification {
         this.provider = provider;
         this.status = Objects.requireNonNull(status, "status must not be null");
         this.providerTransactionId = providerTransactionId;
+        this.providerRequestNo = providerRequestNo;
+        this.webTransactionId = webTransactionId;
         this.routingPolicyVersion = routingPolicyVersion;
         this.requestedAt = Objects.requireNonNull(requestedAt, "requestedAt must not be null");
         this.routedAt = routedAt;
@@ -69,6 +75,8 @@ public class Verification {
                 VerificationStatus.REQUESTED,
                 null,
                 null,
+                null,
+                null,
                 requestedAt,
                 null,
                 null,
@@ -86,6 +94,8 @@ public class Verification {
             ProviderType provider,
             VerificationStatus status,
             String providerTransactionId,
+            String providerRequestNo,
+            String webTransactionId,
             Long routingPolicyVersion,
             LocalDateTime requestedAt,
             LocalDateTime routedAt,
@@ -102,6 +112,8 @@ public class Verification {
                 provider,
                 status,
                 providerTransactionId,
+                providerRequestNo,
+                webTransactionId,
                 routingPolicyVersion,
                 requestedAt,
                 routedAt,
@@ -121,11 +133,17 @@ public class Verification {
         this.status = VerificationStatus.ROUTED;
     }
 
-    public void startProviderCall(String providerTransactionId, LocalDateTime providerCalledAt) {
+    public void startProviderCall(String providerTransactionId, String providerRequestNo, LocalDateTime providerCalledAt) {
         requireStatus(VerificationStatus.ROUTED);
         this.providerTransactionId = requireText(providerTransactionId, "providerTransactionId");
+        this.providerRequestNo = requireText(providerRequestNo, "providerRequestNo");
         this.providerCalledAt = Objects.requireNonNull(providerCalledAt, "providerCalledAt must not be null");
         this.status = VerificationStatus.IN_PROGRESS;
+    }
+
+    public void recordProviderReturn(String webTransactionId) {
+        requireStatus(VerificationStatus.IN_PROGRESS);
+        this.webTransactionId = requireText(webTransactionId, "webTransactionId");
     }
 
     public void succeed(LocalDateTime completedAt) {
@@ -180,6 +198,14 @@ public class Verification {
         return providerTransactionId;
     }
 
+    public String getProviderRequestNo() {
+        return providerRequestNo;
+    }
+
+    public String getWebTransactionId() {
+        return webTransactionId;
+    }
+
     public Long getRoutingPolicyVersion() {
         return routingPolicyVersion;
     }
@@ -223,6 +249,8 @@ public class Verification {
         if (status == VerificationStatus.REQUESTED) {
             requireNull(provider, "provider");
             requireNull(providerTransactionId, "providerTransactionId");
+            requireNull(providerRequestNo, "providerRequestNo");
+            requireNull(webTransactionId, "webTransactionId");
             requireNull(routingPolicyVersion, "routingPolicyVersion");
             requireNull(routedAt, "routedAt");
             requireNull(providerCalledAt, "providerCalledAt");
@@ -236,12 +264,15 @@ public class Verification {
 
         if (status == VerificationStatus.ROUTED) {
             requireNull(providerTransactionId, "providerTransactionId");
+            requireNull(providerRequestNo, "providerRequestNo");
+            requireNull(webTransactionId, "webTransactionId");
             requireNull(providerCalledAt, "providerCalledAt");
             requireNull(completedAt, "completedAt");
             return;
         }
 
         requireText(providerTransactionId, "providerTransactionId");
+        requireText(providerRequestNo, "providerRequestNo");
         requireNotNull(providerCalledAt, "providerCalledAt");
 
         if (status == VerificationStatus.IN_PROGRESS) {

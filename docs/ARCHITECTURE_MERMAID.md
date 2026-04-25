@@ -252,6 +252,8 @@ classDiagram
         -ProviderType provider
         -VerificationStatus status
         -String providerTransactionId
+        -String providerRequestNo
+        -String webTransactionId
         -Long routingPolicyVersion
         -LocalDateTime requestedAt
         -LocalDateTime routedAt
@@ -259,6 +261,14 @@ classDiagram
         -LocalDateTime completedAt
         -Long version
         +requested(...)
+        +rehydrate(...)
+        +routeTo(...)
+        +startProviderCall(...)
+        +recordProviderReturn(...)
+        +succeed(...)
+        +fail(...)
+        +timeout(...)
+        +cancel(...)
         +isTerminal() boolean
     }
 
