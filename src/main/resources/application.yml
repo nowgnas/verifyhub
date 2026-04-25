@@ -1,0 +1,66 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: verifyhub
+  datasource:
+    url: jdbc:mysql://localhost:3306/verifyhub
+    username: verifyhub
+    password: verifyhub
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+
+verifyhub:
+  provider:
+    kg:
+      base-url: http://localhost:8080/mock/providers/KG
+    nice:
+      base-url: http://localhost:8080/mock/providers/NICE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      kgProvider:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+      niceProvider:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+  timelimiter:
+    instances:
+      kgProvider:
+        timeoutDuration: 2s
+      niceProvider:
+        timeoutDuration: 2s
+  retry:
+    instances:
+      kgProvider:
+        maxAttempts: 2
+        waitDuration: 300ms
+      niceProvider:
+        maxAttempts: 2
+        waitDuration: 300ms
