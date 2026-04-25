@@ -10,8 +10,8 @@
 
 ## Current Snapshot
 
-- Current milestone: Milestone 2. Persistence and Migration
-- Next ticket: VH-007. Flyway V1 인증 테이블 마이그레이션 작성
+- Current milestone: Milestone 2. Persistence and Initial Schema
+- Next ticket: VH-008. Flyway V2 초기 라우팅 정책 데이터 작성
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -89,9 +89,22 @@
   - Verification:
     - `./gradlew test --tests com.verifyhub.verification.domain.VerificationStateMachineTest --no-daemon`
 
-## Milestone 2. Persistence and Migration
+## Milestone 2. Persistence and Initial Schema
 
-- [ ] **VH-007. Flyway V1 인증 테이블 마이그레이션 작성**
+- [x] **VH-007. Flyway V1 초기 인증 스키마 작성**
+  - Done:
+    - `V1__create_verification_tables.sql`
+    - `verification_request`
+    - `verification_history`
+    - `provider_call_history`
+    - `late_callback_history`
+    - `provider_routing_policy`
+    - `outbox_event`
+    - provider return/result correlation columns
+    - MySQL JSON payload columns
+    - unique keys and indexes
+  - Verification:
+    - `FlywayInitialSchemaTest`
 - [ ] **VH-008. Flyway V2 초기 라우팅 정책 데이터 작성**
 - [ ] **VH-009. JPA Entity, Repository, Mapper 구현**
 

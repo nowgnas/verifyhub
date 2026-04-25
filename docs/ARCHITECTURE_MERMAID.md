@@ -185,8 +185,9 @@ sequenceDiagram
 
 설계 반영 포인트:
 
-- `ProviderClientPort.requestVerification()`은 NICE의 `/auth/token`과 `/auth/url` 호출을 감싸고, 응답으로 `auth_url`, `transaction_id`, `request_no`를 저장할 수 있어야 한다.
-- `provider_transaction_id`는 NICE 기준으로 `transaction_id` 또는 내부 request_no와 매핑되어야 한다.
+- `ProviderClientPort.requestVerification()`은 NICE의 `/auth/token`과 `/auth/url` 호출을 감싸고, 응답으로 Provider별 인증 진입 URL, `transaction_id`, `request_no`를 표현할 수 있어야 한다.
+- `provider_transaction_id`는 NICE 기준 `transaction_id`와 매핑하고, `provider_request_no`는 NICE `request_no`와 매핑한다.
+- Provider별 인증 진입 URL은 표준 영속 컬럼으로 저장하지 않는다. 요청 멱등성은 idempotency key와 verification 상태를 기준으로 관리한다.
 - `ProviderReturnController`는 NICE 표준창의 `return_url` 수신 endpoint로 사용한다.
 - return payload에는 `web_transaction_id`가 포함되고, 이 값으로 `/auth/result`를 호출한다.
 - 인증 결과 응답의 `integrity_value` 검증 실패는 retry 대상이 아니라 business/security fail로 처리한다.
@@ -212,8 +213,9 @@ sequenceDiagram
     NiceClient->>NICE: POST /ido/intc/v1.0/auth/url\nAuthorization: Bearer access_token\nreturn_url, close_url, svc_types
     NICE-->>NiceClient: auth_url, transaction_id, request_no
 
-    NiceClient-->>Verifyhub: ACCEPTED + auth_url + transaction_id
+    NiceClient-->>Verifyhub: ACCEPTED + auth_url + transaction_id + request_no
     Verifyhub->>DB: save provider=Nice, status=IN_PROGRESS,\nprovider_transaction_id=transaction_id
+    Verifyhub->>DB: save provider_request_no=request_no\nwithout persisting auth_url as a standard field
     Verifyhub-->>Client: verificationId, status=IN_PROGRESS, provider=NICE, authUrl
 
     Client->>Popup: open auth_url

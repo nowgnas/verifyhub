@@ -107,20 +107,23 @@
 - `ARCHITECTURE.md`의 StateMachineTest 요구사항 8개 케이스가 모두 포함된다.
 - `./gradlew test --tests '*StateMachineTest'`가 통과한다.
 
-## Milestone 2. Persistence and Migration
+## Milestone 2. Persistence and Initial Schema
 
-### VH-007. Flyway V1 인증 테이블 마이그레이션 작성
+### VH-007. Flyway V1 초기 인증 스키마 작성
 
 **Type:** Feature  
 **Priority:** P0  
 **Dependencies:** VH-004
 
 **Scope**
+- 기존 운영 DB 변경이 아니라 신규 verifyhub 서비스의 최초 DB 스키마를 Flyway로 버전 관리한다.
 - `verification_request`, `verification_history`, `provider_call_history`, `late_callback_history`, `provider_routing_policy`, `outbox_event` 테이블을 생성한다.
 - 모든 unique key와 index를 문서 기준으로 생성한다.
+- `verification_request`에는 provider 결과 조회와 return/result 중복 판정을 위한 `provider_transaction_id`, `provider_request_no`, `web_transaction_id`를 포함하고 provider 단위 unique key로 중복 association을 막는다.
+- Provider별 인증 진입 URL은 표준 영속 컬럼으로 저장하지 않는다. 요청 멱등성은 idempotency key와 verification 상태를 기준으로 관리한다.
 
 **Acceptance Criteria**
-- MySQL 8에서 마이그레이션이 성공한다.
+- MySQL 8에서 초기 스키마 적용이 성공한다.
 - `verification_request.version`은 optimistic lock에 사용할 수 있다.
 - JSON payload 컬럼은 개인정보 마스킹 전제하에 저장 가능하다.
 
