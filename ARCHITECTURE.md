@@ -263,7 +263,8 @@ NICE 표준창 기반 본인인증 정책:
 
 - NICE는 순수 server-to-server 단일 호출이 아니라 표준창을 포함한다.
 - Provider adapter는 NICE `/ido/intc/v1.0/auth/token` 호출로 access_token, ticket, iterators를 받고, `/ido/intc/v1.0/auth/url` 호출로 auth_url, transaction_id, request_no를 받는다.
-- verifyhub는 Client에게 `authUrl`을 반환하고, Client는 해당 URL로 NICE 표준창을 연다.
+- verifyhub는 Client에게 Provider별 인증 진입 URL을 반환하고, Client는 해당 URL로 NICE 표준창을 연다.
+- 인증 진입 URL은 Provider 표준 영속 필드로 보지 않는다. 요청 멱등성은 `user_id`, `purpose`, `idempotency_key`와 저장된 verification 상태로 관리한다.
 - 사용자가 표준창에서 개인정보를 입력하고 인증을 완료하면 NICE 표준창은 verifyhub의 `return_url`로 `web_transaction_id`를 전달한다.
 - verifyhub는 `web_transaction_id`, `transaction_id`, `request_no`로 NICE `/ido/intc/v1.0/auth/result`를 호출한다.
 - 결과 응답의 `integrity_value`를 검증하고 `enc_data`를 AES/GCM으로 복호화한 뒤 성공/실패 상태를 반영한다.
@@ -344,6 +345,8 @@ DB 테이블:
 - provider VARCHAR(20)
 - status VARCHAR(30) NOT NULL
 - provider_transaction_id VARCHAR(100)
+- provider_request_no VARCHAR(100)
+- web_transaction_id VARCHAR(100)
 - routing_policy_version BIGINT
 - requested_at DATETIME(6) NOT NULL
 - routed_at DATETIME(6)
@@ -357,6 +360,9 @@ DB 테이블:
 
 - UNIQUE uk_verification_id (verification_id)
 - UNIQUE uk_idempotency (user_id, purpose, idempotency_key)
+- UNIQUE uk_provider_transaction (provider, provider_transaction_id)
+- UNIQUE uk_provider_request_no (provider, provider_request_no)
+- UNIQUE uk_provider_web_transaction (provider, web_transaction_id)
 - INDEX idx_verification_status_created_at (status, created_at)
 - INDEX idx_verification_provider_created_at (provider, created_at)
 
@@ -691,6 +697,8 @@ ProviderRequestResult:
 - providerTransactionId
 - providerRequestNo
 - authUrl
+  - Provider별 인증 진입 URL이다.
+  - DB 영속 필드로 표준화하지 않고 API 응답 및 masked provider call history 중심으로 다룬다.
 - resultType
   - ACCEPTED
   - SUCCESS
@@ -882,10 +890,10 @@ docker-compose.yml 요구사항:
 - Redis 6379
 - Prometheus가 /actuator/prometheus scrape
 
-Flyway migration:
+Flyway 초기 스키마:
 V1\_\_create_verification_tables.sql
 
-- 위 DB 테이블 생성
+- 신규 verifyhub 서비스의 최초 DB 스키마를 버전 관리하기 위해 위 DB 테이블을 생성한다.
   V2\_\_insert_initial_provider_routing_policy.sql
 - KG/NICE 초기 정책 insert
 
@@ -897,7 +905,7 @@ V1\_\_create_verification_tables.sql
 4. VerificationStatus, VerificationEvent, ProviderType, Purpose enum 구현
 5. VerificationStateMachine 구현 및 단위 테스트 작성
 6. JPA Entity 및 Repository 구현
-7. Flyway migration 작성
+7. Flyway 초기 스키마 작성
 8. VerificationCommandService 구현
 9. IdempotencyService 구현
 10. RoutingPolicy Repository 구현
