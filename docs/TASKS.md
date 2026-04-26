@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 3. Application Services
-- Next ticket: VH-017. Provider Port 및 Provider HTTP Client 구현
+- Next ticket: VH-018. Resilience4j 설정 적용
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -232,7 +232,21 @@ Routing policy cache 후속 작업:
 
 ## Milestone 5. Provider Integration and Resilience
 
-- [ ] **VH-017. Provider Port 및 Provider HTTP Client 구현**
+- [x] **VH-017. Provider Port 및 Provider HTTP Client 구현**
+  - Done:
+    - `ProviderClientPort`
+    - `ProviderRequest`
+    - `ProviderRequestResult`
+    - `ProviderRequestResultType`
+    - `ProviderResultRequest`
+    - `ProviderResult`
+    - `ProviderResultStatus`
+    - `MockProviderHttpClient`
+    - `KgProviderClient`
+    - `NiceProviderClient`
+    - KG/NICE provider client 패키지 분리 유지
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.verification.adapter.out.provider.kg.KgProviderClientTest --tests com.verifyhub.verification.adapter.out.provider.nice.NiceProviderClientTest --no-daemon`
 - [~] **VH-018. Resilience4j 설정 적용**
   - Partial:
     - `application.yml`에 `kgProvider`, `niceProvider` CircuitBreaker/TimeLimiter/Retry 기본 설정 추가
