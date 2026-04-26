@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 3. Application Services
-- Next ticket: VH-012. IdempotencyService 구현
+- Next ticket: VH-013. Idempotency 단위/통합 테스트 작성
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -51,9 +51,11 @@
     - `TimeProvider`
     - `SystemTimeProvider`
     - `VerificationIdGenerator`
+    - `RequestIdGenerator`
   - Verification:
     - `VerifyhubExceptionTest`
     - `VerificationIdGeneratorTest`
+    - `RequestIdGeneratorTest`
 
 ## Milestone 1. Domain Core
 
@@ -169,7 +171,17 @@
     - `LateCallbackHistoryServiceTest`
     - `OutboxEventServiceTest`
     - `./gradlew clean test --no-daemon`
-- [ ] **VH-012. IdempotencyService 구현**
+- [x] **VH-012. IdempotencyService 구현**
+  - Done:
+    - `IdempotencyService.getOrCreate(...)`
+    - `requestId + purpose + idempotencyKey` 기반 기존 verification 조회
+    - 기존 verification이 없으면 creator 결과 저장
+    - unique constraint 충돌 시 재조회 후 기존 verification 반환
+    - requestId 기반 설계로 로그인 본인인증처럼 userId를 모르는 플로우 지원
+  - Verification:
+    - `IdempotencyServiceTest`
+    - `RequestIdGeneratorTest`
+    - `./gradlew clean test --no-daemon`
 - [ ] **VH-013. Idempotency 단위/통합 테스트 작성**
 
 ## Milestone 4. Routing

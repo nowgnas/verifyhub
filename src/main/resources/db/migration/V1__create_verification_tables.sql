@@ -1,7 +1,7 @@
 CREATE TABLE verification_request (
     id BIGINT NOT NULL AUTO_INCREMENT,
     verification_id VARCHAR(64) NOT NULL,
-    user_id VARCHAR(64) NOT NULL,
+    request_id VARCHAR(64) NOT NULL,
     purpose VARCHAR(30) NOT NULL,
     idempotency_key VARCHAR(128) NOT NULL,
     provider VARCHAR(20),
@@ -19,7 +19,7 @@ CREATE TABLE verification_request (
     updated_at DATETIME(6) NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uk_verification_id (verification_id),
-    UNIQUE KEY uk_idempotency (user_id, purpose, idempotency_key),
+    UNIQUE KEY uk_idempotency (request_id, purpose, idempotency_key),
     UNIQUE KEY uk_provider_transaction (provider, provider_transaction_id),
     UNIQUE KEY uk_provider_request_no (provider, provider_request_no),
     UNIQUE KEY uk_provider_web_transaction (provider, web_transaction_id),

@@ -50,7 +50,7 @@ class VerificationPersistenceAdapterIT {
     void savesAndFindsVerificationByVerificationId() {
         Verification verification = Verification.requested(
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 LocalDateTime.of(2026, 4, 26, 10, 0)
@@ -65,23 +65,23 @@ class VerificationPersistenceAdapterIT {
         Optional<Verification> found = verificationPersistenceAdapter.findByVerificationId("verif_123");
         assertThat(found).isPresent();
         assertThat(found.orElseThrow().getVerificationId()).isEqualTo("verif_123");
-        assertThat(found.orElseThrow().getUserId()).isEqualTo("user-123");
+        assertThat(found.orElseThrow().getRequestId()).isEqualTo("req_123");
         assertThat(found.orElseThrow().getPurpose()).isEqualTo(VerificationPurpose.SIGN_UP);
     }
 
     @Test
-    void findsVerificationByUserIdPurposeAndIdempotencyKey() {
+    void findsVerificationByRequestIdPurposeAndIdempotencyKey() {
         Verification verification = Verification.requested(
                 "verif_456",
-                "user-456",
+                "req_456",
                 VerificationPurpose.LOGIN,
                 "idem-456",
                 LocalDateTime.of(2026, 4, 26, 11, 0)
         );
         verificationPersistenceAdapter.save(verification);
 
-        Optional<Verification> found = verificationPersistenceAdapter.findByUserIdAndPurposeAndIdempotencyKey(
-                "user-456",
+        Optional<Verification> found = verificationPersistenceAdapter.findByRequestIdAndPurposeAndIdempotencyKey(
+                "req_456",
                 VerificationPurpose.LOGIN,
                 "idem-456"
         );
@@ -94,7 +94,7 @@ class VerificationPersistenceAdapterIT {
     void updatesOptimisticVersionWhenSavingExistingVerification() {
         Verification verification = Verification.requested(
                 "verif_789",
-                "user-789",
+                "req_789",
                 VerificationPurpose.PASSWORD_RESET,
                 "idem-789",
                 LocalDateTime.of(2026, 4, 26, 12, 0)
