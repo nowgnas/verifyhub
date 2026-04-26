@@ -127,7 +127,11 @@ sequenceDiagram
         State->>DB: save verification_request
         State->>History: save VERIFICATION_REQUESTED
         Command->>Routing: select provider
-        Routing->>DB: load latest routing policy
+        Routing->>Redis: load latest routing policy cache
+        alt cache miss or Redis unavailable
+            Routing->>DB: load latest routing policy version
+            Routing->>Redis: put routing policy cache
+        end
         Routing-->>Command: RoutingDecision
         Command->>State: transit ROUTED
         Command->>State: transit IN_PROGRESS

@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 3. Application Services
-- Next ticket: VH-014. 라우팅 도메인 및 정책 조회 구현
+- Next ticket: VH-017. Provider Port 및 Provider HTTP Client 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -194,9 +194,41 @@
 
 ## Milestone 4. Routing
 
-- [ ] **VH-014. 라우팅 도메인 및 정책 조회 구현**
-- [ ] **VH-015. WeightedProviderRoutingStrategy 구현**
-- [ ] **VH-016. Routing 단위 테스트 작성**
+- [x] **VH-014. 라우팅 도메인 및 정책 조회 구현**
+  - Done:
+    - `ProviderHealthSnapshot`
+    - `RoutingDecision`
+    - `RoutingReason`
+    - `ProviderRoutingService`
+    - 최신 enabled routing policy 조회
+    - provider health snapshot 기준 unavailable provider 후보 제외
+    - DB source of truth + Redis cache-aside routing policy 운영 기준 문서화
+  - Verification:
+    - `ProviderRoutingServiceTest`
+- [x] **VH-015. WeightedProviderRoutingStrategy 구현**
+  - Done:
+    - `WeightedProviderRoutingStrategy`
+    - `RandomBoundedNumberGenerator`
+    - weight 합산 후 random 구간 기반 provider 선택
+    - 후보 없음 또는 total weight 0 이하일 때 `ProviderUnavailableException`
+  - Verification:
+    - `WeightedProviderRoutingStrategyTest`
+    - `./gradlew clean test --no-daemon`
+- [x] **VH-016. Routing 단위 테스트 작성**
+  - Done:
+    - 모든 provider가 unavailable일 때 `NO_AVAILABLE_PROVIDER` decision 반환 검증
+    - provider health snapshot이 없으면 available로 간주하는 기본 정책 검증
+    - total weight가 0이면 `ProviderUnavailableException` 발생 검증
+    - zero weight provider는 선택 구간을 갖지 않는다는 점 검증
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.routing.application.ProviderRoutingServiceTest --tests com.verifyhub.routing.domain.WeightedProviderRoutingStrategyTest --no-daemon`
+
+Routing policy cache 후속 작업:
+
+- Redis cache adapter 구현
+- routing policy 변경 시 cache invalidation 또는 replacement 구현
+- latest version 조회와 enabled filtering 분리 유지
+- emergency stop 최신 version이 과거 enabled 정책으로 fallback하지 않는지 검증
 
 ## Milestone 5. Provider Integration and Resilience
 

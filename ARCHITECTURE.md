@@ -295,6 +295,25 @@ Provider 선택 정책:
   - policyVersion
   - candidateProviders
 
+Provider routing policy 저장 및 캐시 정책:
+
+- `provider_routing_policy` 테이블을 authoritative source로 둔다.
+- Redis는 routing policy 조회 최적화를 위한 cache-aside 계층으로만 사용한다.
+- 캐시 값에는 policy version, enabled provider 목록, weight를 함께 저장한다.
+- 캐시 키 예시:
+  - `verifyhub:routing-policy:latest`
+- 정책 변경은 DB 반영을 먼저 완료한 뒤 Redis cache를 삭제하거나 새 값으로 교체한다.
+- TTL 없는 Redis 캐시는 명시적 invalidation이 보장될 때만 허용한다.
+- invalidation 누락에 대비하려면 짧은 TTL을 안전장치로 둔다.
+  - 예: 30초 또는 60초
+- Redis miss 또는 Redis 장애 시 DB에서 최신 정책을 조회한다.
+- DB까지 조회할 수 없으면 알 수 없는 stale 정책으로 routing하지 않고 provider unavailable로 fail closed 처리한다.
+- emergency stop은 최신 version의 모든 provider를 disabled 처리하는 방식으로 표현한다.
+- 따라서 최신 version 조회는 enabled 여부와 분리되어야 한다.
+  - 먼저 전체 row 기준 최신 version을 찾는다.
+  - 그 최신 version 안에서 enabled=true인 provider만 후보로 사용한다.
+  - 최신 version이 모두 disabled이면 과거 enabled version으로 fallback하지 않는다.
+
 Resilience4j 정책:
 
 - Provider별 CircuitBreaker를 분리한다.
