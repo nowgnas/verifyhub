@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 3. Application Services
-- Next ticket: VH-013. Idempotency 단위/통합 테스트 작성
+- Next ticket: VH-014. 라우팅 도메인 및 정책 조회 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -182,7 +182,15 @@
     - `IdempotencyServiceTest`
     - `RequestIdGeneratorTest`
     - `./gradlew clean test --no-daemon`
-- [ ] **VH-013. Idempotency 단위/통합 테스트 작성**
+- [x] **VH-013. Idempotency 단위/통합 테스트 작성**
+  - Done:
+    - `IdempotencyServiceTest`
+    - `IdempotencyIntegrationTest`
+    - 같은 `requestId + purpose + idempotencyKey` 요청은 동일 verification row 반환 검증
+    - 같은 `requestId + purpose`라도 다른 idempotency key면 신규 verification row 생성 검증
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.idempotency.application.IdempotencyIntegrationTest --no-daemon`
+    - `./gradlew clean test --no-daemon`
 
 ## Milestone 4. Routing
 
