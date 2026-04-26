@@ -9,6 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 ext {
     resilience4jVersion = '1.7.1'
+    mapstructVersion = '1.5.5.Final'
 }
 
 java {
@@ -37,7 +38,10 @@ dependencies {
     implementation "io.github.resilience4j:resilience4j-circuitbreaker:${resilience4jVersion}"
     implementation "io.github.resilience4j:resilience4j-retry:${resilience4jVersion}"
     implementation "io.github.resilience4j:resilience4j-timelimiter:${resilience4jVersion}"
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     runtimeOnly 'com.mysql:mysql-connector-j'
+
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation platform('org.testcontainers:testcontainers-bom:1.19.8')
