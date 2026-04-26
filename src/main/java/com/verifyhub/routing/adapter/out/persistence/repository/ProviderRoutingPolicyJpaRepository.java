@@ -14,7 +14,6 @@ public interface ProviderRoutingPolicyJpaRepository extends JpaRepository<Provid
               and p.version = (
                 select max(p2.version)
                 from ProviderRoutingPolicyEntity p2
-                where p2.enabled = true
               )
             order by p.weight desc, p.provider asc
             """)
