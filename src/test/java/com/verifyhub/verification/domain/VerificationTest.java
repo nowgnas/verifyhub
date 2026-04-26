@@ -16,14 +16,14 @@ class VerificationTest {
 
         Verification verification = Verification.requested(
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 requestedAt
         );
 
         assertThat(verification.getVerificationId()).isEqualTo("verif_123");
-        assertThat(verification.getUserId()).isEqualTo("user-123");
+        assertThat(verification.getRequestId()).isEqualTo("req_123");
         assertThat(verification.getPurpose()).isEqualTo(VerificationPurpose.SIGN_UP);
         assertThat(verification.getIdempotencyKey()).isEqualTo("idem-123");
         assertThat(verification.getStatus()).isEqualTo(VerificationStatus.REQUESTED);
@@ -39,7 +39,7 @@ class VerificationTest {
     void routesRequestedVerification() {
         Verification verification = Verification.requested(
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 LocalDateTime.of(2026, 4, 25, 12, 0)
@@ -59,7 +59,7 @@ class VerificationTest {
     void progressesRoutedVerificationToInProgress() {
         Verification verification = Verification.requested(
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 LocalDateTime.of(2026, 4, 25, 12, 0)
@@ -80,7 +80,7 @@ class VerificationTest {
     void completesInProgressVerificationWithSuccess() {
         Verification verification = Verification.requested(
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 LocalDateTime.of(2026, 4, 25, 12, 0)
@@ -106,7 +106,7 @@ class VerificationTest {
         Verification verification = Verification.rehydrate(
                 10L,
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 ProviderType.NICE,
@@ -135,7 +135,7 @@ class VerificationTest {
     void recordsProviderReturnWebTransactionId() {
         Verification verification = Verification.requested(
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 LocalDateTime.of(2026, 4, 25, 12, 0)
@@ -152,7 +152,7 @@ class VerificationTest {
     void cancelsRequestedVerification() {
         Verification verification = Verification.requested(
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 LocalDateTime.of(2026, 4, 25, 12, 0)
@@ -171,7 +171,7 @@ class VerificationTest {
         assertThatThrownBy(() -> Verification.rehydrate(
                 10L,
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 ProviderType.NICE,
@@ -194,7 +194,7 @@ class VerificationTest {
         assertThatThrownBy(() -> Verification.rehydrate(
                 10L,
                 "verif_123",
-                "user-123",
+                "req_123",
                 VerificationPurpose.SIGN_UP,
                 "idem-123",
                 ProviderType.NICE,

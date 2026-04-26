@@ -25,8 +25,8 @@ public class VerificationEntity {
     @Column(name = "verification_id", nullable = false, unique = true, length = 64)
     private String verificationId;
 
-    @Column(name = "user_id", nullable = false, length = 64)
-    private String userId;
+    @Column(name = "request_id", nullable = false, length = 64)
+    private String requestId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -83,7 +83,7 @@ public class VerificationEntity {
     public VerificationEntity(
             Long id,
             String verificationId,
-            String userId,
+            String requestId,
             VerificationPurpose purpose,
             String idempotencyKey,
             ProviderType provider,
@@ -102,7 +102,7 @@ public class VerificationEntity {
     ) {
         this.id = id;
         this.verificationId = verificationId;
-        this.userId = userId;
+        this.requestId = requestId;
         this.purpose = purpose;
         this.idempotencyKey = idempotencyKey;
         this.provider = provider;
@@ -136,12 +136,12 @@ public class VerificationEntity {
         this.verificationId = verificationId;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getRequestId() {
+        return requestId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
     }
 
     public VerificationPurpose getPurpose() {

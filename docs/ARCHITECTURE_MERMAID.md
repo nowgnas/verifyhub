@@ -113,7 +113,8 @@ sequenceDiagram
 
     Client->>Controller: POST /api/v1/verifications\nIdempotency-Key
     Controller->>Command: requestVerification(command)
-    Command->>Idem: find existing by userId + purpose + key
+    Note over Client,Command: requestId는 인증 전 플로우 ID이며 재시도 동안 유지된다.
+    Command->>Idem: find existing by requestId + purpose + key
     Idem->>DB: query verification_request
 
     alt existing request
@@ -248,7 +249,7 @@ classDiagram
     class Verification {
         -Long id
         -String verificationId
-        -String userId
+        -String requestId
         -VerificationPurpose purpose
         -String idempotencyKey
         -ProviderType provider

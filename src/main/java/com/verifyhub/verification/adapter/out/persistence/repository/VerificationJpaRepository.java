@@ -9,8 +9,8 @@ public interface VerificationJpaRepository extends JpaRepository<VerificationEnt
 
     Optional<VerificationEntity> findByVerificationId(String verificationId);
 
-    Optional<VerificationEntity> findByUserIdAndPurposeAndIdempotencyKey(
-            String userId,
+    Optional<VerificationEntity> findByRequestIdAndPurposeAndIdempotencyKey(
+            String requestId,
             VerificationPurpose purpose,
             String idempotencyKey
     );

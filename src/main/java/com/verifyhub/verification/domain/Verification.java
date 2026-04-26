@@ -7,7 +7,7 @@ public class Verification {
 
     private final Long id;
     private final String verificationId;
-    private final String userId;
+    private final String requestId;
     private final VerificationPurpose purpose;
     private final String idempotencyKey;
     private ProviderType provider;
@@ -25,7 +25,7 @@ public class Verification {
     private Verification(
             Long id,
             String verificationId,
-            String userId,
+            String requestId,
             VerificationPurpose purpose,
             String idempotencyKey,
             ProviderType provider,
@@ -42,7 +42,7 @@ public class Verification {
     ) {
         this.id = id;
         this.verificationId = requireText(verificationId, "verificationId");
-        this.userId = requireText(userId, "userId");
+        this.requestId = requireText(requestId, "requestId");
         this.purpose = Objects.requireNonNull(purpose, "purpose must not be null");
         this.idempotencyKey = requireText(idempotencyKey, "idempotencyKey");
         this.provider = provider;
@@ -60,7 +60,7 @@ public class Verification {
 
     public static Verification requested(
             String verificationId,
-            String userId,
+            String requestId,
             VerificationPurpose purpose,
             String idempotencyKey,
             LocalDateTime requestedAt
@@ -68,7 +68,7 @@ public class Verification {
         return new Verification(
                 null,
                 verificationId,
-                userId,
+                requestId,
                 purpose,
                 idempotencyKey,
                 null,
@@ -88,7 +88,7 @@ public class Verification {
     public static Verification rehydrate(
             Long id,
             String verificationId,
-            String userId,
+            String requestId,
             VerificationPurpose purpose,
             String idempotencyKey,
             ProviderType provider,
@@ -106,7 +106,7 @@ public class Verification {
         Verification verification = new Verification(
                 id,
                 verificationId,
-                userId,
+                requestId,
                 purpose,
                 idempotencyKey,
                 provider,
@@ -176,8 +176,8 @@ public class Verification {
         return verificationId;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getRequestId() {
+        return requestId;
     }
 
     public VerificationPurpose getPurpose() {

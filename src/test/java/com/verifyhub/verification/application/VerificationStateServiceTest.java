@@ -34,7 +34,7 @@ class VerificationStateServiceTest {
         LocalDateTime routedAt = LocalDateTime.of(2026, 4, 26, 12, 1);
         Verification requested = Verification.requested(
                 "verif-1",
-                "user-1",
+                "req_1",
                 VerificationPurpose.SIGN_UP,
                 "idem-1",
                 requestedAt
@@ -64,7 +64,7 @@ class VerificationStateServiceTest {
         LocalDateTime requestedAt = LocalDateTime.of(2026, 4, 26, 12, 0);
         Verification requested = Verification.requested(
                 "verif-2",
-                "user-2",
+                "req_2",
                 VerificationPurpose.SIGN_UP,
                 "idem-2",
                 requestedAt

@@ -32,7 +32,7 @@ class VerificationEntityMappingTest {
         assertThat(fieldNames).contains(
                 "id",
                 "verificationId",
-                "userId",
+                "requestId",
                 "purpose",
                 "idempotencyKey",
                 "provider",

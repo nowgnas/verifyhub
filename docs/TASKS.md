@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 3. Application Services
-- Next ticket: VH-012. IdempotencyService 구현
+- Next ticket: VH-014. 라우팅 도메인 및 정책 조회 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -51,9 +51,11 @@
     - `TimeProvider`
     - `SystemTimeProvider`
     - `VerificationIdGenerator`
+    - `RequestIdGenerator`
   - Verification:
     - `VerifyhubExceptionTest`
     - `VerificationIdGeneratorTest`
+    - `RequestIdGeneratorTest`
 
 ## Milestone 1. Domain Core
 
@@ -169,8 +171,26 @@
     - `LateCallbackHistoryServiceTest`
     - `OutboxEventServiceTest`
     - `./gradlew clean test --no-daemon`
-- [ ] **VH-012. IdempotencyService 구현**
-- [ ] **VH-013. Idempotency 단위/통합 테스트 작성**
+- [x] **VH-012. IdempotencyService 구현**
+  - Done:
+    - `IdempotencyService.getOrCreate(...)`
+    - `requestId + purpose + idempotencyKey` 기반 기존 verification 조회
+    - 기존 verification이 없으면 creator 결과 저장
+    - unique constraint 충돌 시 재조회 후 기존 verification 반환
+    - requestId 기반 설계로 로그인 본인인증처럼 userId를 모르는 플로우 지원
+  - Verification:
+    - `IdempotencyServiceTest`
+    - `RequestIdGeneratorTest`
+    - `./gradlew clean test --no-daemon`
+- [x] **VH-013. Idempotency 단위/통합 테스트 작성**
+  - Done:
+    - `IdempotencyServiceTest`
+    - `IdempotencyIntegrationTest`
+    - 같은 `requestId + purpose + idempotencyKey` 요청은 동일 verification row 반환 검증
+    - 같은 `requestId + purpose`라도 다른 idempotency key면 신규 verification row 생성 검증
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.idempotency.application.IdempotencyIntegrationTest --no-daemon`
+    - `./gradlew clean test --no-daemon`
 
 ## Milestone 4. Routing
 

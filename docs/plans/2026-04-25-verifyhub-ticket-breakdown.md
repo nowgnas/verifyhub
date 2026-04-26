@@ -152,7 +152,7 @@
 - `@Version` 기반 optimistic lock을 적용한다.
 
 **Acceptance Criteria**
-- `findByVerificationId`, `findByUserIdAndPurposeAndIdempotencyKey`, `save`가 동작한다.
+- `findByVerificationId`, `findByRequestIdAndPurposeAndIdempotencyKey`, `save`가 동작한다.
 - domain과 persistence 간 변환 책임이 adapter 계층에 있다.
 
 ## Milestone 3. Application Services
@@ -195,11 +195,14 @@
 
 **Scope**
 - `Idempotency-Key` 헤더 기반 기존 verification 조회를 구현한다.
-- 동일 `userId + purpose + idempotencyKey` 요청은 기존 결과를 반환한다.
+- 동일 `requestId + purpose + idempotencyKey` 요청은 기존 결과를 반환한다.
 - 동시 insert 충돌은 unique constraint 예외 후 재조회로 처리한다.
+- `requestId`는 인증 전 요청 흐름 ID로 사용하며, 로그인처럼 userId가 없는 플로우도 지원한다.
+- `requestId`는 플로우 시작 시 생성하고 같은 플로우의 재시도 동안 재사용한다.
 
 **Acceptance Criteria**
 - 동일 idempotency key 요청 시 verification row가 1건만 생성된다.
+- requestId 기반으로 기존 verification을 조회한다.
 - Redis lock 없이 DB unique key 중심으로 동작한다.
 
 ### VH-013. Idempotency 단위/통합 테스트 작성

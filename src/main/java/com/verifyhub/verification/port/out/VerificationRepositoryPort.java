@@ -10,8 +10,8 @@ public interface VerificationRepositoryPort {
 
     Optional<Verification> findByVerificationId(String verificationId);
 
-    Optional<Verification> findByUserIdAndPurposeAndIdempotencyKey(
-            String userId,
+    Optional<Verification> findByRequestIdAndPurposeAndIdempotencyKey(
+            String requestId,
             VerificationPurpose purpose,
             String idempotencyKey
     );

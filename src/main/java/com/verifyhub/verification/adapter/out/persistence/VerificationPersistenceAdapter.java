@@ -48,12 +48,12 @@ public class VerificationPersistenceAdapter implements VerificationRepositoryPor
     }
 
     @Override
-    public Optional<Verification> findByUserIdAndPurposeAndIdempotencyKey(
-            String userId,
+    public Optional<Verification> findByRequestIdAndPurposeAndIdempotencyKey(
+            String requestId,
             VerificationPurpose purpose,
             String idempotencyKey
     ) {
-        return verificationJpaRepository.findByUserIdAndPurposeAndIdempotencyKey(userId, purpose, idempotencyKey)
+        return verificationJpaRepository.findByRequestIdAndPurposeAndIdempotencyKey(requestId, purpose, idempotencyKey)
                 .map(verificationPersistenceMapper::toDomain);
     }
 }

@@ -33,7 +33,7 @@ public abstract class VerificationPersistenceMapper {
         return Verification.rehydrate(
                 entity.getId(),
                 entity.getVerificationId(),
-                entity.getUserId(),
+                entity.getRequestId(),
                 entity.getPurpose(),
                 entity.getIdempotencyKey(),
                 entity.getProvider(),

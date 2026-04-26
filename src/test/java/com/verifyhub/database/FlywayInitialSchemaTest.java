@@ -55,7 +55,7 @@ class FlywayInitialSchemaTest {
             assertThat(columnNames(connection, "verification_request")).contains(
                     "id",
                     "verification_id",
-                    "user_id",
+                    "request_id",
                     "purpose",
                     "idempotency_key",
                     "provider",
@@ -110,7 +110,7 @@ class FlywayInitialSchemaTest {
             insertVerificationRequest(
                     connection,
                     "verif_001",
-                    "user-001",
+                    "req_001",
                     "idem-001",
                     "provider-tx-001",
                     "provider-request-001",
@@ -120,7 +120,7 @@ class FlywayInitialSchemaTest {
             assertThatThrownBy(() -> insertVerificationRequest(
                     connection,
                     "verif_002",
-                    "user-002",
+                    "req_002",
                     "idem-002",
                     "provider-tx-001",
                     "provider-request-002",
@@ -130,7 +130,7 @@ class FlywayInitialSchemaTest {
             assertThatThrownBy(() -> insertVerificationRequest(
                     connection,
                     "verif_003",
-                    "user-003",
+                    "req_003",
                     "idem-003",
                     "provider-tx-003",
                     "provider-request-001",
@@ -140,7 +140,7 @@ class FlywayInitialSchemaTest {
             assertThatThrownBy(() -> insertVerificationRequest(
                     connection,
                     "verif_004",
-                    "user-004",
+                    "req_004",
                     "idem-004",
                     "provider-tx-004",
                     "provider-request-004",
@@ -196,7 +196,7 @@ class FlywayInitialSchemaTest {
     private static void insertVerificationRequest(
             Connection connection,
             String verificationId,
-            String userId,
+            String requestId,
             String idempotencyKey,
             String providerTransactionId,
             String providerRequestNo,
@@ -205,7 +205,7 @@ class FlywayInitialSchemaTest {
         String sql = """
                 INSERT INTO verification_request (
                     verification_id,
-                    user_id,
+                    request_id,
                     purpose,
                     idempotency_key,
                     provider,
@@ -220,7 +220,7 @@ class FlywayInitialSchemaTest {
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, verificationId);
-            statement.setString(2, userId);
+            statement.setString(2, requestId);
             statement.setString(3, idempotencyKey);
             statement.setString(4, providerTransactionId);
             statement.setString(5, providerRequestNo);
