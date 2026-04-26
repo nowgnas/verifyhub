@@ -10,8 +10,8 @@
 
 ## Current Snapshot
 
-- Current milestone: Milestone 2. Persistence and Initial Schema
-- Next ticket: VH-009. JPA Entity, Repository, Mapper 구현
+- Current milestone: Milestone 3. Application Services
+- Next ticket: VH-011. History 및 Outbox 서비스 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -112,12 +112,43 @@
     - NICE weight 90 enabled true version 1
   - Verification:
     - `FlywayInitialSchemaTest`
-- [ ] **VH-009. JPA Entity, Repository, Mapper 구현**
+- [x] **VH-009. JPA Entity, Repository, Mapper 구현**
+  - Done:
+    - `VerificationEntity`
+    - `ProviderRoutingPolicyEntity`
+    - `VerificationJpaRepository`
+    - `ProviderRoutingPolicyJpaRepository`
+    - `VerificationPersistenceMapper` (MapStruct)
+    - `ProviderRoutingPolicyPersistenceMapper` (MapStruct)
+    - `VerificationPersistenceAdapter`
+    - `ProviderRoutingPolicyPersistenceAdapter`
+    - `VerificationRepositoryPort`
+    - `ProviderRoutingPolicyRepositoryPort`
+  - Verification:
+    - `VerificationEntityMappingTest`
+    - `ProviderRoutingPolicyEntityMappingTest`
+    - `VerificationPersistenceAdapterIT`
+    - `ProviderRoutingPolicyPersistenceAdapterIT`
+    - `./gradlew clean test --no-daemon`
 
 ## Milestone 3. Application Services
 
-- [ ] **VH-010. VerificationStateService 구현**
-- [ ] **VH-011. History 및 Outbox 서비스 구현**
+- [x] **VH-010. VerificationStateService 구현**
+  - Done:
+    - `VerificationStateService` 구현
+    - 상태 전이 API: `routeTo`, `startProviderCall`, `markSuccess`, `markFail`, `markTimeout`, `cancel`
+    - 상태 전이 성공 시 `verification_request` 저장 후 `verification_history` 저장
+    - 상태 전이 실패 시 예외 전파, history 미저장
+  - Verification:
+    - `VerificationStateServiceTest`
+    - `./gradlew clean test --no-daemon`
+- [~] **VH-011. History 및 Outbox 서비스 구현**
+  - Partial:
+    - `VerificationHistoryRepositoryPort` 추가
+    - `VerificationHistoryEntity`
+    - `VerificationHistoryJpaRepository`
+    - `VerificationHistoryPersistenceMapper`
+    - `VerificationHistoryPersistenceAdapter`
 - [ ] **VH-012. IdempotencyService 구현**
 - [ ] **VH-013. Idempotency 단위/통합 테스트 작성**
 
