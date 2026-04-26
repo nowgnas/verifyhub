@@ -4,9 +4,7 @@ import com.verifyhub.common.exception.VerificationNotFoundException;
 import com.verifyhub.verification.domain.ProviderType;
 import com.verifyhub.verification.domain.Verification;
 import com.verifyhub.verification.domain.VerificationEvent;
-import com.verifyhub.verification.domain.VerificationHistory;
 import com.verifyhub.verification.domain.VerificationStatus;
-import com.verifyhub.verification.port.out.VerificationHistoryRepositoryPort;
 import com.verifyhub.verification.port.out.VerificationRepositoryPort;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
@@ -16,14 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class VerificationStateService {
 
     private final VerificationRepositoryPort verificationRepositoryPort;
-    private final VerificationHistoryRepositoryPort verificationHistoryRepositoryPort;
+    private final VerificationHistoryService verificationHistoryService;
 
     public VerificationStateService(
             VerificationRepositoryPort verificationRepositoryPort,
-            VerificationHistoryRepositoryPort verificationHistoryRepositoryPort
+            VerificationHistoryService verificationHistoryService
     ) {
         this.verificationRepositoryPort = verificationRepositoryPort;
-        this.verificationHistoryRepositoryPort = verificationHistoryRepositoryPort;
+        this.verificationHistoryService = verificationHistoryService;
     }
 
     @Transactional
@@ -97,16 +95,15 @@ public class VerificationStateService {
             String rawPayload
     ) {
         Verification saved = verificationRepositoryPort.save(verification);
-        verificationHistoryRepositoryPort.save(VerificationHistory.of(
+        verificationHistoryService.record(
                 saved.getVerificationId(),
                 fromStatus,
                 saved.getStatus(),
                 eventType,
                 reason,
                 saved.getProvider(),
-                rawPayload,
-                LocalDateTime.now()
-        ));
+                rawPayload
+        );
         return saved;
     }
 }

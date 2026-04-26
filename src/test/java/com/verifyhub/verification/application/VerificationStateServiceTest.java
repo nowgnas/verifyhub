@@ -12,10 +12,8 @@ import com.verifyhub.common.exception.InvalidStateTransitionException;
 import com.verifyhub.common.exception.VerificationNotFoundException;
 import com.verifyhub.verification.domain.ProviderType;
 import com.verifyhub.verification.domain.Verification;
-import com.verifyhub.verification.domain.VerificationHistory;
 import com.verifyhub.verification.domain.VerificationPurpose;
 import com.verifyhub.verification.domain.VerificationStatus;
-import com.verifyhub.verification.port.out.VerificationHistoryRepositoryPort;
 import com.verifyhub.verification.port.out.VerificationRepositoryPort;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -24,10 +22,10 @@ import org.junit.jupiter.api.Test;
 class VerificationStateServiceTest {
 
     private final VerificationRepositoryPort verificationRepositoryPort = mock(VerificationRepositoryPort.class);
-    private final VerificationHistoryRepositoryPort verificationHistoryRepositoryPort = mock(VerificationHistoryRepositoryPort.class);
+    private final VerificationHistoryService verificationHistoryService = mock(VerificationHistoryService.class);
     private final VerificationStateService verificationStateService = new VerificationStateService(
             verificationRepositoryPort,
-            verificationHistoryRepositoryPort
+            verificationHistoryService
     );
 
     @Test
@@ -50,7 +48,15 @@ class VerificationStateServiceTest {
         assertThat(routed.getStatus()).isEqualTo(VerificationStatus.ROUTED);
         assertThat(routed.getProvider()).isEqualTo(ProviderType.NICE);
         verify(verificationRepositoryPort).save(routed);
-        verify(verificationHistoryRepositoryPort).save(any(VerificationHistory.class));
+        verify(verificationHistoryService).record(
+                "verif-1",
+                VerificationStatus.REQUESTED,
+                VerificationStatus.ROUTED,
+                com.verifyhub.verification.domain.VerificationEvent.ROUTE_SELECTED,
+                null,
+                ProviderType.NICE,
+                null
+        );
     }
 
     @Test
@@ -69,7 +75,7 @@ class VerificationStateServiceTest {
         assertThatThrownBy(() -> verificationStateService.markSuccess("verif-2", LocalDateTime.of(2026, 4, 26, 12, 5)))
                 .isInstanceOf(InvalidStateTransitionException.class);
         verify(verificationRepositoryPort, never()).save(any(Verification.class));
-        verify(verificationHistoryRepositoryPort, never()).save(any(VerificationHistory.class));
+        verify(verificationHistoryService, never()).record(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test

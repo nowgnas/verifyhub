@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 3. Application Services
-- Next ticket: VH-011. History 및 Outbox 서비스 구현
+- Next ticket: VH-012. IdempotencyService 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -142,13 +142,33 @@
   - Verification:
     - `VerificationStateServiceTest`
     - `./gradlew clean test --no-daemon`
-- [~] **VH-011. History 및 Outbox 서비스 구현**
-  - Partial:
-    - `VerificationHistoryRepositoryPort` 추가
-    - `VerificationHistoryEntity`
-    - `VerificationHistoryJpaRepository`
-    - `VerificationHistoryPersistenceMapper`
-    - `VerificationHistoryPersistenceAdapter`
+- [x] **VH-011. History 및 Outbox 서비스 구현**
+  - Done:
+    - `VerificationHistoryService`
+    - `ProviderCallHistoryService`
+    - `LateCallbackHistoryService`
+    - `OutboxEventService`
+    - `ProviderCallHistoryRepositoryPort`
+    - `LateCallbackHistoryRepositoryPort`
+    - `OutboxEventPort`
+    - `ProviderCallHistoryEntity`
+    - `LateCallbackHistoryEntity`
+    - `OutboxEventEntity`
+    - `ProviderCallHistoryJpaRepository`
+    - `LateCallbackHistoryJpaRepository`
+    - `OutboxEventJpaRepository`
+    - `ProviderCallHistoryPersistenceMapper`
+    - `LateCallbackHistoryPersistenceMapper`
+    - `OutboxEventPersistenceMapper`
+    - `ProviderCallHistoryPersistenceAdapter`
+    - `LateCallbackHistoryPersistenceAdapter`
+    - `OutboxEventPersistenceAdapter`
+  - Verification:
+    - `VerificationHistoryServiceTest`
+    - `ProviderCallHistoryServiceTest`
+    - `LateCallbackHistoryServiceTest`
+    - `OutboxEventServiceTest`
+    - `./gradlew clean test --no-daemon`
 - [ ] **VH-012. IdempotencyService 구현**
 - [ ] **VH-013. Idempotency 단위/통합 테스트 작성**
 
