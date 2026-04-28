@@ -88,10 +88,11 @@ public class ProviderVerificationFlowService {
         ProviderRequest providerRequest = new ProviderRequest(
                 routed.getVerificationId(),
                 routed.getRequestId(),
-                command.name(),
-                command.phoneNumber(),
-                command.birthDate(),
-                routed.getPurpose().name()
+                providerRequestNo(provider, routed),
+                command.returnUrl(),
+                command.closeUrl(),
+                routed.getPurpose().name(),
+                command.svcTypes()
         );
         ProviderRequestResult providerResult = resilienceDecorator.requestVerification(providerClient, providerRequest);
         recordProviderCall(routed.getVerificationId(), provider, providerRequest, providerResult);
@@ -108,8 +109,12 @@ public class ProviderVerificationFlowService {
                 completed.getVerificationId(),
                 provider,
                 completed.getStatus(),
-                providerResult.authUrl()
+                providerResult.authEntry()
         );
+    }
+
+    private String providerRequestNo(ProviderType provider, Verification verification) {
+        return provider.name().toLowerCase() + "-" + verification.getRequestId();
     }
 
     private Verification completeIfTerminalProviderResult(

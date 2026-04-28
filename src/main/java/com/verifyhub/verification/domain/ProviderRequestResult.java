@@ -6,7 +6,7 @@ public record ProviderRequestResult(
         ProviderType provider,
         String providerTransactionId,
         String providerRequestNo,
-        String authUrl,
+        ProviderAuthEntry authEntry,
         ProviderRequestResultType resultType,
         String rawResponse,
         Integer httpStatus,

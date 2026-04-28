@@ -2,6 +2,7 @@ package com.verifyhub.verification.adapter.out.provider;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.verifyhub.verification.domain.ProviderAuthEntry;
 import com.verifyhub.verification.domain.ProviderRequest;
 import com.verifyhub.verification.domain.ProviderRequestResult;
 import com.verifyhub.verification.domain.ProviderRequestResultType;
@@ -20,11 +21,11 @@ import org.springframework.web.client.RestTemplate;
 
 public abstract class MockProviderHttpClient implements ProviderClientPort {
 
-    private final ProviderType providerType;
-    private final RestTemplate restTemplate;
-    private final String baseUrl;
-    private final ObjectMapper objectMapper;
-    private final Clock clock;
+    protected final ProviderType providerType;
+    protected final RestTemplate restTemplate;
+    protected final String baseUrl;
+    protected final ObjectMapper objectMapper;
+    protected final Clock clock;
 
     protected MockProviderHttpClient(
             ProviderType providerType,
@@ -58,7 +59,7 @@ public abstract class MockProviderHttpClient implements ProviderClientPort {
         Instant startedAt = clock.instant();
         try {
             ResponseEntity<MockProviderVerificationResponse> response = restTemplate.postForEntity(
-                    baseUrl + "/verifications",
+                    verificationUrl(),
                     request,
                     MockProviderVerificationResponse.class
             );
@@ -67,7 +68,7 @@ public abstract class MockProviderHttpClient implements ProviderClientPort {
                     providerType,
                     body == null ? null : body.providerTransactionId(),
                     body == null ? null : body.providerRequestNo(),
-                    body == null ? null : body.authUrl(),
+                    body == null ? null : body.authEntry(),
                     body == null ? ProviderRequestResultType.ERROR : body.resultType(),
                     toRawResponse(body),
                     response.getStatusCodeValue(),
@@ -111,11 +112,15 @@ public abstract class MockProviderHttpClient implements ProviderClientPort {
         );
     }
 
-    private long elapsedMillis(Instant startedAt) {
+    protected String verificationUrl() {
+        return baseUrl + "/verifications";
+    }
+
+    protected long elapsedMillis(Instant startedAt) {
         return Duration.between(startedAt, clock.instant()).toMillis();
     }
 
-    private String toRawResponse(Object value) {
+    protected String toRawResponse(Object value) {
         if (value == null) {
             return null;
         }
@@ -136,7 +141,7 @@ public abstract class MockProviderHttpClient implements ProviderClientPort {
     private record MockProviderVerificationResponse(
             String providerTransactionId,
             String providerRequestNo,
-            String authUrl,
+            ProviderAuthEntry authEntry,
             ProviderRequestResultType resultType
     ) {
     }
