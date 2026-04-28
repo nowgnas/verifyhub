@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 3. Application Services
-- Next ticket: VH-018. Resilience4j 설정 적용
+- Next ticket: VH-020. 인증 요청 생성 API 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -247,14 +247,31 @@ Routing policy cache 후속 작업:
     - KG/NICE provider client 패키지 분리 유지
   - Verification:
     - `./gradlew test --tests com.verifyhub.verification.adapter.out.provider.kg.KgProviderClientTest --tests com.verifyhub.verification.adapter.out.provider.nice.NiceProviderClientTest --no-daemon`
-- [~] **VH-018. Resilience4j 설정 적용**
+- [x] **VH-018. Resilience4j 설정 적용**
   - Partial:
     - `application.yml`에 `kgProvider`, `niceProvider` CircuitBreaker/TimeLimiter/Retry 기본 설정 추가
+  - Done:
+    - `ProviderClientResilienceDecorator`
+    - 실제 provider client와 CircuitBreaker/Retry/TimeLimiter decorator 연결
+    - provider별 resilience instance 이름 매핑
+    - timeout을 `ProviderTimeoutException`으로 변환
+    - provider 호출 실패를 `ProviderCallFailedException`으로 변환
   - Remaining:
-    - 실제 provider client와 resilience decorator 연결
-    - retry 대상/비대상 정책 구현
+    - retry 대상/비대상 세부 정책 고도화
+    - retry count event 수집 후 provider call history 반영
 
-- [ ] **VH-019. Provider 호출 흐름 구현**
+- [x] **VH-019. Provider 호출 흐름 구현**
+  - Done:
+    - `ProviderVerificationCommand`
+    - `ProviderVerificationResult`
+    - `ProviderVerificationFlowService`
+    - routing 결과 기반 provider client 선택
+    - `REQUESTED -> ROUTED -> IN_PROGRESS` 상태 전이 연결
+    - provider request verification 호출
+    - provider call history 저장
+    - provider terminal request result에 따른 success/fail/timeout 상태 반영 hook
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.verification.application.ProviderVerificationFlowServiceTest --tests com.verifyhub.verification.adapter.out.provider.ProviderClientResilienceDecoratorTest --no-daemon`
 
 ## Milestone 6. Verification API
 
