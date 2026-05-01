@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -147,5 +148,54 @@ class VerificationCreateServiceTest {
         assertThat(providerCommand.closeUrl()).isNull();
         assertThat(providerCommand.svcTypes()).containsExactly("M");
         assertThat(providerCommand.providerHealthSnapshots()).isEmpty();
+    }
+
+    @Test
+    void returnsExistingInProgressVerificationWithoutRepeatingProviderVerification() {
+        VerificationCreateService service = new VerificationCreateService(
+                verificationIdGenerator,
+                timeProvider,
+                idempotencyService,
+                providerVerificationFlowService
+        );
+        Verification existing = Verification.rehydrate(
+                1L,
+                "verif-in-progress",
+                "req-3",
+                VerificationPurpose.LOGIN,
+                "idem-3",
+                ProviderType.NICE,
+                VerificationStatus.IN_PROGRESS,
+                "nice-tx-3",
+                "nice-req-3",
+                null,
+                1L,
+                LocalDateTime.of(2026, 5, 1, 14, 20),
+                LocalDateTime.of(2026, 5, 1, 14, 21),
+                LocalDateTime.of(2026, 5, 1, 14, 22),
+                null,
+                1L
+        );
+        when(idempotencyService.getOrCreate(
+                eq("req-3"),
+                eq(VerificationPurpose.LOGIN),
+                eq("idem-3"),
+                any()
+        )).thenReturn(existing);
+
+        ProviderVerificationResult result = service.create(new VerificationCreateCommand(
+                "req-3",
+                VerificationPurpose.LOGIN,
+                "idem-3",
+                "https://client.example/return",
+                "https://client.example/close",
+                List.of("M")
+        ));
+
+        assertThat(result.verificationId()).isEqualTo("verif-in-progress");
+        assertThat(result.provider()).isEqualTo(ProviderType.NICE);
+        assertThat(result.status()).isEqualTo(VerificationStatus.IN_PROGRESS);
+        assertThat(result.authEntry()).isNull();
+        verify(providerVerificationFlowService, never()).requestProviderVerification(any());
     }
 }

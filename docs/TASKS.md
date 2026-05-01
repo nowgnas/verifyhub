@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 6. Verification API
-- Next ticket: VH-022. VerificationFlow 통합 테스트 작성
+- Next ticket: VH-023. Provider Return URL 및 Result Retrieval 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -301,7 +301,17 @@ Routing policy cache 후속 작업:
     - `VerificationHistoryPersistenceAdapterIT`
     - `VerificationQueryControllerTest`
     - `./gradlew clean test --no-daemon`
-- [ ] **VH-022. VerificationFlow 통합 테스트 작성**
+- [x] **VH-022. VerificationFlow 통합 테스트 작성**
+  - Done:
+    - `VerificationFlowIntegrationTest` 추가
+    - `POST /api/v1/verifications` 생성 흐름 검증
+    - 상태 조회와 이력 조회 API 연결 검증
+    - `verification_request`, `verification_history`, `provider_call_history` 저장 검증
+    - 같은 idempotency 요청 replay 시 provider flow 재실행 방지
+  - Verification:
+    - `VerificationCreateServiceTest`
+    - `VerificationFlowIntegrationTest`
+    - `./gradlew clean test --no-daemon`
 
 ## Milestone 7. Provider Return and Late Result
 
