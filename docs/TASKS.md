@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 6. Verification API
-- Next ticket: VH-021. 인증 조회 및 이력 조회 API 구현
+- Next ticket: VH-022. VerificationFlow 통합 테스트 작성
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -290,7 +290,17 @@ Routing policy cache 후속 작업:
     - `VerificationCreateServiceTest`
     - `VerificationCreateControllerTest`
     - `./gradlew clean test --no-daemon`
-- [ ] **VH-021. 인증 조회 및 이력 조회 API 구현**
+- [x] **VH-021. 인증 조회 및 이력 조회 API 구현**
+  - Done:
+    - `GET /api/v1/verifications/{verificationId}` 구현
+    - `GET /api/v1/verifications/{verificationId}/histories` 구현
+    - 조회 전용 `VerificationQueryService` 추가
+    - 이력 `createdAt ASC` 조회 port/JPA adapter 구현
+  - Verification:
+    - `VerificationQueryServiceTest`
+    - `VerificationHistoryPersistenceAdapterIT`
+    - `VerificationQueryControllerTest`
+    - `./gradlew clean test --no-daemon`
 - [ ] **VH-022. VerificationFlow 통합 테스트 작성**
 
 ## Milestone 7. Provider Return and Late Result
