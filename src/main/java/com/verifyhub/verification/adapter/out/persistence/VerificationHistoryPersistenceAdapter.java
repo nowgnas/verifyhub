@@ -4,6 +4,7 @@ import com.verifyhub.verification.adapter.out.persistence.mapper.VerificationHis
 import com.verifyhub.verification.adapter.out.persistence.repository.VerificationHistoryJpaRepository;
 import com.verifyhub.verification.domain.VerificationHistory;
 import com.verifyhub.verification.port.out.VerificationHistoryRepositoryPort;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,5 +28,12 @@ public class VerificationHistoryPersistenceAdapter implements VerificationHistor
                         verificationHistoryPersistenceMapper.toEntity(verificationHistory)
                 )
         );
+    }
+
+    @Override
+    public List<VerificationHistory> findByVerificationIdOrderByCreatedAtAsc(String verificationId) {
+        return verificationHistoryJpaRepository.findByVerificationIdOrderByCreatedAtAsc(verificationId).stream()
+                .map(verificationHistoryPersistenceMapper::toDomain)
+                .toList();
     }
 }
