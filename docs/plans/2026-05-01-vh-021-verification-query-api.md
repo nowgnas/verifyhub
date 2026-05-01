@@ -1,64 +1,64 @@
-# VH-021 Verification Query API Implementation Plan
+# VH-021 인증 조회 API 구현 계획
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add read APIs for verification status and verification histories.
+**목표:** 인증 상태 조회 API와 인증 이력 조회 API를 추가한다.
 
-**Architecture:** Keep the web adapter thin. Add a query application service that reads `Verification` and `VerificationHistory` through output ports, then expose DTOs from a controller under `/api/v1/verifications`.
+**아키텍처:** Web adapter는 얇게 유지한다. 조회 전용 application service가 output port를 통해 `Verification`과 `VerificationHistory`를 읽고, `/api/v1/verifications` 하위 controller가 응답 DTO로 변환해 노출한다.
 
-**Tech Stack:** Java 17, Spring Boot 2.7.18, Spring MVC, Spring Data JPA, JUnit 5, Mockito, MockMvc.
+**기술 스택:** Java 17, Spring Boot 2.7.18, Spring MVC, Spring Data JPA, JUnit 5, Mockito, MockMvc.
 
 ---
 
-### Task 1: Query Service
+### 작업 1: 조회 서비스
 
-**Files:**
-- Create: `src/main/java/com/verifyhub/verification/application/VerificationQueryService.java`
-- Modify: `src/main/java/com/verifyhub/verification/port/out/VerificationHistoryRepositoryPort.java`
-- Test: `src/test/java/com/verifyhub/verification/application/VerificationQueryServiceTest.java`
+**파일:**
+- 생성: `src/main/java/com/verifyhub/verification/application/VerificationQueryService.java`
+- 수정: `src/main/java/com/verifyhub/verification/port/out/VerificationHistoryRepositoryPort.java`
+- 테스트: `src/test/java/com/verifyhub/verification/application/VerificationQueryServiceTest.java`
 
-**Steps:**
-1. Write failing tests for fetching one verification and ordered histories.
-2. Run `./gradlew test --tests com.verifyhub.verification.application.VerificationQueryServiceTest --no-daemon` and confirm failure.
-3. Implement `VerificationQueryService`.
-4. Add `findByVerificationIdOrderByCreatedAtAsc` to the history port.
-5. Run the focused test and confirm pass.
+**단계:**
+1. 단건 인증 조회와 시간순 이력 조회 실패 테스트를 작성한다.
+2. `./gradlew test --tests com.verifyhub.verification.application.VerificationQueryServiceTest --no-daemon`를 실행해 실패를 확인한다.
+3. `VerificationQueryService`를 구현한다.
+4. 이력 port에 `findByVerificationIdOrderByCreatedAtAsc`를 추가한다.
+5. 집중 테스트를 다시 실행해 통과를 확인한다.
 
-### Task 2: Persistence Query
+### 작업 2: Persistence 조회
 
-**Files:**
-- Modify: `src/main/java/com/verifyhub/verification/adapter/out/persistence/repository/VerificationHistoryJpaRepository.java`
-- Modify: `src/main/java/com/verifyhub/verification/adapter/out/persistence/VerificationHistoryPersistenceAdapter.java`
-- Test: `src/test/java/com/verifyhub/verification/adapter/out/persistence/VerificationHistoryPersistenceAdapterIT.java`
+**파일:**
+- 수정: `src/main/java/com/verifyhub/verification/adapter/out/persistence/repository/VerificationHistoryJpaRepository.java`
+- 수정: `src/main/java/com/verifyhub/verification/adapter/out/persistence/VerificationHistoryPersistenceAdapter.java`
+- 테스트: `src/test/java/com/verifyhub/verification/adapter/out/persistence/VerificationHistoryPersistenceAdapterIT.java`
 
-**Steps:**
-1. Write a failing integration test that saves histories out of order and reads them in `createdAt ASC` order.
-2. Run the focused integration test and confirm failure.
-3. Implement the JPA repository query and adapter mapping.
-4. Run the focused integration test and confirm pass.
+**단계:**
+1. 이력을 순서와 다르게 저장한 뒤 `createdAt ASC` 순서로 읽는 실패 통합 테스트를 작성한다.
+2. 집중 통합 테스트를 실행해 실패를 확인한다.
+3. JPA repository 조회 메서드와 adapter 매핑을 구현한다.
+4. 집중 통합 테스트를 다시 실행해 통과를 확인한다.
 
-### Task 3: Web API
+### 작업 3: Web API
 
-**Files:**
-- Create: `src/main/java/com/verifyhub/verification/adapter/in/web/VerificationQueryController.java`
-- Create: `src/main/java/com/verifyhub/verification/adapter/in/web/dto/VerificationQueryResponse.java`
-- Create: `src/main/java/com/verifyhub/verification/adapter/in/web/dto/VerificationHistoryListResponse.java`
-- Create: `src/main/java/com/verifyhub/verification/adapter/in/web/dto/VerificationHistoryResponse.java`
-- Test: `src/test/java/com/verifyhub/verification/adapter/in/web/VerificationQueryControllerTest.java`
+**파일:**
+- 생성: `src/main/java/com/verifyhub/verification/adapter/in/web/VerificationQueryController.java`
+- 생성: `src/main/java/com/verifyhub/verification/adapter/in/web/dto/VerificationQueryResponse.java`
+- 생성: `src/main/java/com/verifyhub/verification/adapter/in/web/dto/VerificationHistoryListResponse.java`
+- 생성: `src/main/java/com/verifyhub/verification/adapter/in/web/dto/VerificationHistoryResponse.java`
+- 테스트: `src/test/java/com/verifyhub/verification/adapter/in/web/VerificationQueryControllerTest.java`
 
-**Steps:**
-1. Write failing MockMvc tests for status lookup, histories lookup, and 404 lookup.
-2. Run the focused web test and confirm failure.
-3. Implement DTO records and controller methods.
-4. Run the focused web test and confirm pass.
+**단계:**
+1. 상태 조회, 이력 조회, 404 응답에 대한 실패 MockMvc 테스트를 작성한다.
+2. 집중 Web 테스트를 실행해 실패를 확인한다.
+3. DTO record와 controller method를 구현한다.
+4. 집중 Web 테스트를 다시 실행해 통과를 확인한다.
 
-### Task 4: Documentation and Board
+### 작업 4: 문서와 작업 보드
 
-**Files:**
-- Modify: `docs/TASKS.md`
+**파일:**
+- 수정: `docs/TASKS.md`
 
-**Steps:**
-1. Mark `VH-021` done.
-2. Set next ticket to `VH-022`.
-3. Record verification command and result after full test execution.
-4. Run `./gradlew clean test --no-daemon`.
+**단계:**
+1. `VH-021`을 완료 상태로 표시한다.
+2. 다음 티켓을 `VH-022`로 설정한다.
+3. 전체 테스트 실행 후 검증 명령과 결과를 기록한다.
+4. `./gradlew clean test --no-daemon`를 실행한다.
