@@ -15,4 +15,9 @@ public class KgProviderClient extends MockProviderHttpClient {
     ) {
         super(ProviderType.KG, restTemplateBuilder, baseUrl);
     }
+
+    @Override
+    protected String verificationUrl() {
+        return baseUrl + "/goCashMain.mcash";
+    }
 }

@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.verifyhub.verification.domain.AuthEntryType;
 import com.verifyhub.verification.domain.ProviderRequest;
 import com.verifyhub.verification.domain.ProviderRequestResult;
 import com.verifyhub.verification.domain.ProviderRequestResultType;
@@ -41,15 +42,16 @@ class KgProviderClientTest {
 
     @Test
     void requestsVerification() {
-        wireMockServer.stubFor(post(urlEqualTo("/verifications"))
+        wireMockServer.stubFor(post(urlEqualTo("/goCashMain.mcash"))
                 .withRequestBody(equalToJson("""
                         {
                           "verificationId": "ver_123",
                           "requestId": "req_123",
-                          "name": "tester",
-                          "phoneNumber": "01012345678",
-                          "birthDate": "19900101",
-                          "purpose": "LOGIN"
+                          "providerRequestNo": "kg-trade-1",
+                          "returnUrl": "https://verifyhub.example/api/v1/providers/KG/noti",
+                          "closeUrl": "https://verifyhub.example/api/v1/providers/KG/close",
+                          "purpose": "LOGIN",
+                          "svcTypes": ["M"]
                         }
                         """))
                 .willReturn(aResponse()
@@ -58,8 +60,18 @@ class KgProviderClientTest {
                         .withBody("""
                                 {
                                   "providerTransactionId": "kg-tx-1",
-                                  "providerRequestNo": "kg-req-1",
-                                  "authUrl": "https://kg.example/auth",
+                                  "providerRequestNo": "kg-trade-1",
+                                  "authEntry": {
+                                    "provider": "KG",
+                                    "type": "FORM_POST",
+                                    "url": "https://auth.mobilians.co.kr/goCashMain.mcash",
+                                    "method": "POST",
+                                    "charset": "EUC-KR",
+                                    "fields": {
+                                      "Tradeid": "kg-trade-1",
+                                      "Notiurl": "https://verifyhub.example/api/v1/providers/KG/noti"
+                                    }
+                                  },
                                   "resultType": "ACCEPTED"
                                 }
                                 """)));
@@ -67,16 +79,19 @@ class KgProviderClientTest {
         ProviderRequestResult result = kgProviderClient.requestVerification(new ProviderRequest(
                 "ver_123",
                 "req_123",
-                "tester",
-                "01012345678",
-                "19900101",
-                "LOGIN"
+                "kg-trade-1",
+                "https://verifyhub.example/api/v1/providers/KG/noti",
+                "https://verifyhub.example/api/v1/providers/KG/close",
+                "LOGIN",
+                java.util.List.of("M")
         ));
 
         assertThat(result.provider()).isEqualTo(ProviderType.KG);
         assertThat(result.providerTransactionId()).isEqualTo("kg-tx-1");
-        assertThat(result.providerRequestNo()).isEqualTo("kg-req-1");
-        assertThat(result.authUrl()).isEqualTo("https://kg.example/auth");
+        assertThat(result.providerRequestNo()).isEqualTo("kg-trade-1");
+        assertThat(result.authEntry().type()).isEqualTo(AuthEntryType.FORM_POST);
+        assertThat(result.authEntry().charset()).isEqualTo("EUC-KR");
+        assertThat(result.authEntry().fields()).containsEntry("Tradeid", "kg-trade-1");
         assertThat(result.resultType()).isEqualTo(ProviderRequestResultType.ACCEPTED);
         assertThat(result.httpStatus()).isEqualTo(200);
         assertThat(result.latencyMs()).isNotNegative();

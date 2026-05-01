@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.verifyhub.verification.domain.AuthEntryType;
+import com.verifyhub.verification.domain.ProviderAuthEntry;
 import com.verifyhub.verification.domain.ProviderRequest;
 import com.verifyhub.verification.domain.ProviderRequestResult;
 import com.verifyhub.verification.domain.ProviderRequestResultType;
@@ -14,6 +16,8 @@ import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -23,12 +27,27 @@ class ProviderClientResilienceDecoratorTest {
     @Test
     void retriesProviderVerificationCall() {
         ProviderClientPort delegate = mock(ProviderClientPort.class);
-        ProviderRequest request = new ProviderRequest("verif-1", "req-1", "tester", "01012345678", "19900101", "LOGIN");
+        ProviderRequest request = new ProviderRequest(
+                "verif-1",
+                "req-1",
+                "kg-req-1",
+                "https://verifyhub.example/api/v1/providers/KG/noti",
+                "https://verifyhub.example/api/v1/providers/KG/close",
+                "LOGIN",
+                List.of("M")
+        );
         ProviderRequestResult expected = new ProviderRequestResult(
                 ProviderType.KG,
                 "kg-tx-1",
                 "kg-req-1",
-                null,
+                new ProviderAuthEntry(
+                        ProviderType.KG,
+                        AuthEntryType.FORM_POST,
+                        "https://auth.mobilians.co.kr/goCashMain.mcash",
+                        "POST",
+                        "EUC-KR",
+                        Map.of("Tradeid", "kg-req-1")
+                ),
                 ProviderRequestResultType.ACCEPTED,
                 "{}",
                 200,

@@ -276,6 +276,10 @@ Routing policy cache 후속 작업:
 ## Milestone 6. Verification API
 
 - [ ] **VH-020. 인증 요청 생성 API 구현**
+  - Prep:
+    - provider init 요청 모델을 개인정보 입력값이 아닌 `returnUrl`, `closeUrl`, `svcTypes`, `providerRequestNo` 중심으로 변경
+    - `ProviderAuthEntry` / `AuthEntryType` 추가
+    - VH-020 API 응답에서 provider별 진입 방식을 표현할 수 있도록 준비
 - [ ] **VH-021. 인증 조회 및 이력 조회 API 구현**
 - [ ] **VH-022. VerificationFlow 통합 테스트 작성**
 
@@ -293,10 +297,14 @@ Routing policy cache 후속 작업:
   - Partial:
     - `mockprovider` 패키지 골격 추가
     - KG/NICE provider client 패키지와 mock provider API 책임 분리 문서화
+    - NICE 임시 endpoint 추가
+      - `/mock/providers/NICE/ido/intc/{version}/auth/token`
+      - `/mock/providers/NICE/ido/intc/{version}/auth/url`
+      - `/mock/providers/NICE/ido/intc/{version}/auth/result`
+    - KG 임시 endpoint 추가
+      - `/mock/providers/KG/goCashMain.mcash`
+      - `/mock/providers/KG/noti`
   - Remaining:
-    - `/mock/providers/{provider}/verifications`
-    - `/mock/providers/{provider}/returns`
-    - `/mock/providers/{provider}/results`
     - `/mock/providers/{provider}/scenario`
     - scenario service 구현
 
