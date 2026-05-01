@@ -275,11 +275,21 @@ Routing policy cache 후속 작업:
 
 ## Milestone 6. Verification API
 
-- [ ] **VH-020. 인증 요청 생성 API 구현**
+- [x] **VH-020. 인증 요청 생성 API 구현**
   - Prep:
     - provider init 요청 모델을 개인정보 입력값이 아닌 `returnUrl`, `closeUrl`, `svcTypes`, `providerRequestNo` 중심으로 변경
     - `ProviderAuthEntry` / `AuthEntryType` 추가
     - VH-020 API 응답에서 provider별 진입 방식을 표현할 수 있도록 준비
+  - Done:
+    - `POST /api/v1/verifications` 구현
+    - `Idempotency-Key` 필수 검증 구현
+    - request validation 구현
+    - `VerificationCreateService`에서 `IdempotencyService`와 `ProviderVerificationFlowService` 연결
+    - 응답에 `verificationId`, `status`, `provider`, `authEntry` 포함
+  - Verification:
+    - `VerificationCreateServiceTest`
+    - `VerificationCreateControllerTest`
+    - `./gradlew clean test --no-daemon`
 - [x] **VH-021. 인증 조회 및 이력 조회 API 구현**
   - Done:
     - `GET /api/v1/verifications/{verificationId}` 구현
