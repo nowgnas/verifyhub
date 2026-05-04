@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 7. Provider Return and Late Result
-- Next ticket: VH-025. Provider Return/Result 단위/통합 테스트 작성
+- Next ticket: VH-026. 관리자 재처리 API 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -337,7 +337,15 @@ Routing policy cache 후속 작업:
   - Verification:
     - `ProviderReturnServiceTest`
     - `./gradlew clean test --no-daemon`
-- [ ] **VH-025. Provider Return/Result 단위/통합 테스트 작성**
+- [x] **VH-025. Provider Return/Result 단위/통합 테스트 작성**
+  - Done:
+    - provider return/result success 통합 테스트 추가
+    - provider result integrity failure 통합 테스트 추가
+    - terminal duplicate return 통합 테스트 추가
+    - 상태, callback history, outbox, late callback history 저장 검증
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.verification.application.ProviderReturnIntegrationTest --no-daemon`
+    - `./gradlew clean test --no-daemon`
 
 ## Milestone 8. Admin and Operations
 
