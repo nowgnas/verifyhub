@@ -4,6 +4,7 @@ import com.verifyhub.common.id.VerificationIdGenerator;
 import com.verifyhub.common.time.TimeProvider;
 import com.verifyhub.idempotency.application.IdempotencyService;
 import com.verifyhub.verification.domain.Verification;
+import com.verifyhub.verification.domain.VerificationStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -39,6 +40,15 @@ public class VerificationCreateService {
                         timeProvider.now()
                 )
         );
+
+        if (verification.getStatus() != VerificationStatus.REQUESTED) {
+            return new ProviderVerificationResult(
+                    verification.getVerificationId(),
+                    verification.getProvider(),
+                    verification.getStatus(),
+                    null
+            );
+        }
 
         return providerVerificationFlowService.requestProviderVerification(new ProviderVerificationCommand(
                 verification,
