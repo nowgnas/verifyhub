@@ -82,6 +82,19 @@ public class VerificationStateService {
         return saveWithHistory(verification, fromStatus, VerificationEvent.CANCEL_REQUESTED, reason, null);
     }
 
+    @Transactional
+    public Verification recordProviderReturn(
+            String verificationId,
+            String webTransactionId,
+            VerificationEvent eventType,
+            String rawPayload
+    ) {
+        Verification verification = findByVerificationId(verificationId);
+        VerificationStatus fromStatus = verification.getStatus();
+        verification.recordProviderReturn(webTransactionId);
+        return saveWithHistory(verification, fromStatus, eventType, null, rawPayload);
+    }
+
     private Verification findByVerificationId(String verificationId) {
         return verificationRepositoryPort.findByVerificationId(verificationId)
                 .orElseThrow(() -> new VerificationNotFoundException(verificationId));

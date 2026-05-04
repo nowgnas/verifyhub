@@ -10,8 +10,8 @@
 
 ## Current Snapshot
 
-- Current milestone: Milestone 6. Verification API
-- Next ticket: VH-023. Provider Return URL 및 Result Retrieval 구현
+- Current milestone: Milestone 7. Provider Return and Late Result
+- Next ticket: VH-024. Late/Duplicate Return Result 정책 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -315,7 +315,19 @@ Routing policy cache 후속 작업:
 
 ## Milestone 7. Provider Return and Late Result
 
-- [ ] **VH-023. Provider Return URL 및 Result Retrieval 구현**
+- [x] **VH-023. Provider Return URL 및 Result Retrieval 구현**
+  - Done:
+    - `GET /api/v1/providers/{provider}/returns` 구현
+    - `POST /api/v1/providers/{provider}/returns` 구현
+    - path provider와 verification provider 일치 검증
+    - `webTransactionId` 저장 및 callback history 기록
+    - `ProviderClientPort.requestResult(...)` 기반 결과 조회
+    - provider result success/fail과 integrity 검증 결과에 따른 상태 전이
+    - terminal 처리 후 outbox event 저장
+  - Verification:
+    - `ProviderReturnServiceTest`
+    - `ProviderReturnControllerTest`
+    - `./gradlew clean test --no-daemon`
 - [ ] **VH-024. Late/Duplicate Return Result 정책 구현**
 - [ ] **VH-025. Provider Return/Result 단위/통합 테스트 작성**
 
