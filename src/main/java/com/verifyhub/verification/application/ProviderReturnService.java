@@ -29,6 +29,7 @@ public class ProviderReturnService {
     private final ProviderClientResilienceDecorator resilienceDecorator;
     private final OutboxEventService outboxEventService;
     private final TimeProvider timeProvider;
+    private final LateCallbackHistoryService lateCallbackHistoryService;
 
     public ProviderReturnService(
             VerificationRepositoryPort verificationRepositoryPort,
@@ -36,7 +37,8 @@ public class ProviderReturnService {
             List<ProviderClientPort> providerClients,
             ProviderClientResilienceDecorator resilienceDecorator,
             OutboxEventService outboxEventService,
-            TimeProvider timeProvider
+            TimeProvider timeProvider,
+            LateCallbackHistoryService lateCallbackHistoryService
     ) {
         this.verificationRepositoryPort = verificationRepositoryPort;
         this.verificationStateService = verificationStateService;
@@ -44,6 +46,7 @@ public class ProviderReturnService {
         this.resilienceDecorator = resilienceDecorator;
         this.outboxEventService = outboxEventService;
         this.timeProvider = timeProvider;
+        this.lateCallbackHistoryService = lateCallbackHistoryService;
     }
 
     public ProviderReturnResult handleReturn(ProviderReturnCommand command) {
@@ -59,6 +62,10 @@ public class ProviderReturnService {
                 verification.getVerificationId(),
                 command.webTransactionId()
         ));
+
+        if (verification.getStatus() != VerificationStatus.IN_PROGRESS) {
+            return recordLateCallback(command, verification, providerResult);
+        }
 
         boolean success = providerResult.result() == ProviderResultStatus.SUCCESS && providerResult.integrityVerified();
         verificationStateService.recordProviderReturn(
@@ -91,9 +98,32 @@ public class ProviderReturnService {
         if (verification.getProvider() != pathProvider) {
             throw new InvalidRequestException("provider mismatch: path provider " + pathProvider + " does not match verification provider " + verification.getProvider());
         }
-        if (verification.getStatus() != VerificationStatus.IN_PROGRESS) {
-            throw new InvalidRequestException("verification must be IN_PROGRESS to handle provider return");
-        }
+    }
+
+    private ProviderReturnResult recordLateCallback(
+            ProviderReturnCommand command,
+            Verification verification,
+            ProviderResult providerResult
+    ) {
+        boolean duplicate = command.webTransactionId().equals(verification.getWebTransactionId());
+        lateCallbackHistoryService.record(
+                verification.getVerificationId(),
+                command.provider(),
+                verification.getStatus(),
+                providerResult.result().name(),
+                duplicate,
+                providerResult.rawPayload(),
+                duplicate
+                        ? "duplicate provider return received after terminal status"
+                        : "late provider return received after terminal status"
+        );
+        return new ProviderReturnResult(
+                verification.getVerificationId(),
+                verification.getProvider(),
+                verification.getStatus(),
+                providerResult.result(),
+                providerResult.integrityVerified()
+        );
     }
 
     private ProviderClientPort providerClient(ProviderType provider) {

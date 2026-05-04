@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 7. Provider Return and Late Result
-- Next ticket: VH-024. Late/Duplicate Return Result 정책 구현
+- Next ticket: VH-025. Provider Return/Result 단위/통합 테스트 작성
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -328,7 +328,15 @@ Routing policy cache 후속 작업:
     - `ProviderReturnServiceTest`
     - `ProviderReturnControllerTest`
     - `./gradlew clean test --no-daemon`
-- [ ] **VH-024. Late/Duplicate Return Result 정책 구현**
+- [x] **VH-024. Late/Duplicate Return Result 정책 구현**
+  - Done:
+    - terminal 상태 provider return/result 수신 시 상태 변경 방지
+    - terminal 상태 callback에 대한 `late_callback_history` 저장
+    - 기존 `webTransactionId`와 incoming `webTransactionId`가 같으면 duplicate로 기록
+    - terminal callback 처리 시 outbox event 중복 저장 방지
+  - Verification:
+    - `ProviderReturnServiceTest`
+    - `./gradlew clean test --no-daemon`
 - [ ] **VH-025. Provider Return/Result 단위/통합 테스트 작성**
 
 ## Milestone 8. Admin and Operations

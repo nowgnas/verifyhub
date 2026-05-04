@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +34,7 @@ class ProviderReturnServiceTest {
     private final ProviderClientResilienceDecorator resilienceDecorator = mock(ProviderClientResilienceDecorator.class);
     private final OutboxEventService outboxEventService = mock(OutboxEventService.class);
     private final TimeProvider timeProvider = mock(TimeProvider.class);
+    private final LateCallbackHistoryService lateCallbackHistoryService = mock(LateCallbackHistoryService.class);
 
     @Test
     void retrievesProviderResultAndMarksVerificationSuccess() {
@@ -43,7 +45,8 @@ class ProviderReturnServiceTest {
                 List.of(niceProviderClient),
                 resilienceDecorator,
                 outboxEventService,
-                timeProvider
+                timeProvider,
+                lateCallbackHistoryService
         );
         LocalDateTime now = LocalDateTime.of(2026, 5, 4, 10, 3);
         Verification inProgress = inProgressVerification(ProviderType.NICE);
@@ -100,7 +103,8 @@ class ProviderReturnServiceTest {
                 List.of(niceProviderClient),
                 resilienceDecorator,
                 outboxEventService,
-                timeProvider
+                timeProvider,
+                lateCallbackHistoryService
         );
         when(verificationRepositoryPort.findByVerificationId("verif-1"))
                 .thenReturn(Optional.of(inProgressVerification(ProviderType.NICE)));
@@ -123,7 +127,8 @@ class ProviderReturnServiceTest {
                 List.of(niceProviderClient),
                 resilienceDecorator,
                 outboxEventService,
-                timeProvider
+                timeProvider,
+                lateCallbackHistoryService
         );
         LocalDateTime now = LocalDateTime.of(2026, 5, 4, 10, 3);
         Verification inProgress = inProgressVerification(ProviderType.NICE);
@@ -159,6 +164,96 @@ class ProviderReturnServiceTest {
                 now,
                 "provider result integrity verification failed"
         );
+    }
+
+    @Test
+    void recordsLateCallbackWithoutChangingTerminalTimeoutStatus() {
+        when(niceProviderClient.providerType()).thenReturn(ProviderType.NICE);
+        ProviderReturnService service = new ProviderReturnService(
+                verificationRepositoryPort,
+                verificationStateService,
+                List.of(niceProviderClient),
+                resilienceDecorator,
+                outboxEventService,
+                timeProvider,
+                lateCallbackHistoryService
+        );
+        Verification timeout = terminalVerification(VerificationStatus.TIMEOUT, null);
+        when(verificationRepositoryPort.findByVerificationId("verif-1")).thenReturn(Optional.of(timeout));
+        when(resilienceDecorator.requestResult(any(), any())).thenReturn(new ProviderResult(
+                ProviderType.NICE,
+                "nice-tx-1",
+                "verif-1",
+                ProviderResultStatus.SUCCESS,
+                true,
+                "{\"result\":\"SUCCESS\"}"
+        ));
+
+        ProviderReturnResult result = service.handleReturn(new ProviderReturnCommand(
+                ProviderType.NICE,
+                "verif-1",
+                "web-late-1"
+        ));
+
+        assertThat(result.status()).isEqualTo(VerificationStatus.TIMEOUT);
+        assertThat(result.result()).isEqualTo(ProviderResultStatus.SUCCESS);
+        assertThat(result.integrityVerified()).isTrue();
+        verify(lateCallbackHistoryService).record(
+                "verif-1",
+                ProviderType.NICE,
+                VerificationStatus.TIMEOUT,
+                "SUCCESS",
+                false,
+                "{\"result\":\"SUCCESS\"}",
+                "late provider return received after terminal status"
+        );
+        verify(verificationStateService, never()).markSuccess(any(), any());
+        verify(verificationStateService, never()).markFail(any(), any(), any());
+        verify(outboxEventService, never()).enqueue(any(), any(), any(), any());
+    }
+
+    @Test
+    void recordsDuplicateCallbackWhenSameWebTransactionIdArrivesAfterSuccess() {
+        when(niceProviderClient.providerType()).thenReturn(ProviderType.NICE);
+        ProviderReturnService service = new ProviderReturnService(
+                verificationRepositoryPort,
+                verificationStateService,
+                List.of(niceProviderClient),
+                resilienceDecorator,
+                outboxEventService,
+                timeProvider,
+                lateCallbackHistoryService
+        );
+        Verification success = terminalVerification(VerificationStatus.SUCCESS, "web-tx-1");
+        when(verificationRepositoryPort.findByVerificationId("verif-1")).thenReturn(Optional.of(success));
+        when(resilienceDecorator.requestResult(any(), any())).thenReturn(new ProviderResult(
+                ProviderType.NICE,
+                "nice-tx-1",
+                "verif-1",
+                ProviderResultStatus.SUCCESS,
+                true,
+                "{\"result\":\"SUCCESS\"}"
+        ));
+
+        ProviderReturnResult result = service.handleReturn(new ProviderReturnCommand(
+                ProviderType.NICE,
+                "verif-1",
+                "web-tx-1"
+        ));
+
+        assertThat(result.status()).isEqualTo(VerificationStatus.SUCCESS);
+        verify(lateCallbackHistoryService).record(
+                "verif-1",
+                ProviderType.NICE,
+                VerificationStatus.SUCCESS,
+                "SUCCESS",
+                true,
+                "{\"result\":\"SUCCESS\"}",
+                "duplicate provider return received after terminal status"
+        );
+        verify(verificationStateService, never()).markSuccess(any(), any());
+        verify(verificationStateService, never()).markFail(any(), any(), any());
+        verify(outboxEventService, never()).enqueue(any(), any(), any(), any());
     }
 
     private Verification inProgressVerification(ProviderType provider) {
@@ -215,6 +310,27 @@ class ProviderReturnServiceTest {
                 "nice-tx-1",
                 "nice-req-1",
                 "web-tx-1",
+                1L,
+                LocalDateTime.of(2026, 5, 4, 10, 0),
+                LocalDateTime.of(2026, 5, 4, 10, 1),
+                LocalDateTime.of(2026, 5, 4, 10, 2),
+                LocalDateTime.of(2026, 5, 4, 10, 3),
+                2L
+        );
+    }
+
+    private Verification terminalVerification(VerificationStatus status, String webTransactionId) {
+        return Verification.rehydrate(
+                1L,
+                "verif-1",
+                "req-1",
+                VerificationPurpose.LOGIN,
+                "idem-1",
+                ProviderType.NICE,
+                status,
+                "nice-tx-1",
+                "nice-req-1",
+                webTransactionId,
                 1L,
                 LocalDateTime.of(2026, 5, 4, 10, 0),
                 LocalDateTime.of(2026, 5, 4, 10, 1),
