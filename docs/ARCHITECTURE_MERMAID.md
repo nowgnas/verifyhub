@@ -13,7 +13,6 @@ flowchart LR
     subgraph Verifyhub["verifyhub Spring Boot App"]
         VerificationApi["Verification API\n/api/v1/verifications"]
         ReturnApi["Provider Return API\n/api/v1/providers/{provider}/returns"]
-        AdminApi["Admin API\n/admin/v1"]
         MockProviderApi["Internal Mock Provider API\n/mock/providers/{provider}"]
 
         VerificationCore["Verification Core\nstate, idempotency, history"]
@@ -27,7 +26,6 @@ flowchart LR
     Prometheus[(Prometheus)]
 
     Client --> VerificationApi
-    Client --> AdminApi
     VerificationApi --> VerificationCore
     ReturnApi --> VerificationCore
     VerificationCore --> RoutingCore

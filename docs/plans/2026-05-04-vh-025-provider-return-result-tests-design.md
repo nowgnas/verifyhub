@@ -32,5 +32,5 @@ VH-023에서 provider return/result 처리 API와 상태 전이를 구현했고,
 ## Non-Goals
 
 - provider client HTTP parsing 자체는 기존 KG/NICE client 테스트 범위로 둔다.
-- admin 재처리 API와 수동 result polling은 VH-026에서 다룬다.
+- 관리자 수동 재처리 API는 본인인증 도메인 정책에서 제외한다.
 - 실제 mock provider scenario 화면은 후속 프론트 프로젝트 작업에서 다룬다.
