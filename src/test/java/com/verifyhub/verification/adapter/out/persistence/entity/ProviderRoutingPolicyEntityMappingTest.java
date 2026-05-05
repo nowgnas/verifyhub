@@ -10,7 +10,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.Version;
 import org.junit.jupiter.api.Test;
 
 class ProviderRoutingPolicyEntityMappingTest {
@@ -37,7 +36,7 @@ class ProviderRoutingPolicyEntityMappingTest {
         );
 
         assertThat(type.getDeclaredField("id").isAnnotationPresent(Id.class)).isTrue();
-        assertThat(type.getDeclaredField("version").isAnnotationPresent(Version.class)).isTrue();
+        assertThat(type.getDeclaredField("version").getAnnotation(Column.class).nullable()).isFalse();
         assertThat(type.getDeclaredField("provider").getAnnotation(Column.class).nullable()).isFalse();
         assertThat(type.getDeclaredField("weight").getAnnotation(Column.class).nullable()).isFalse();
         assertThat(type.getDeclaredField("enabled").getAnnotation(Column.class).nullable()).isFalse();

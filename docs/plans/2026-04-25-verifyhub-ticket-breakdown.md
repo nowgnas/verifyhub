@@ -58,7 +58,7 @@
 
 **Acceptance Criteria**
 - 예외 발생 시 `{ code, message, traceId }` 형태로 응답한다.
-- `VerificationNotFoundException`, `InvalidStateTransitionException`, `ProviderUnavailableException`, `InvalidCallbackSignatureException`, `RetryNotAllowedException`이 존재한다.
+- `VerificationNotFoundException`, `InvalidStateTransitionException`, `ProviderUnavailableException`, `InvalidCallbackSignatureException`이 존재한다.
 
 ## Milestone 1. Domain Core
 

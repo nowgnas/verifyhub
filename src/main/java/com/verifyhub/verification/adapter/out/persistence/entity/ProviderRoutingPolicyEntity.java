@@ -10,7 +10,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.Version;
 
 @Entity
 @Table(name = "provider_routing_policy")
@@ -30,7 +29,6 @@ public class ProviderRoutingPolicyEntity {
     @Column(nullable = false)
     private Boolean enabled;
 
-    @Version
     @Column(nullable = false)
     private Long version;
 

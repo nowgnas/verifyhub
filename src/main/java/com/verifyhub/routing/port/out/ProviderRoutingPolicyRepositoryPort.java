@@ -6,4 +6,10 @@ import java.util.List;
 public interface ProviderRoutingPolicyRepositoryPort {
 
     List<ProviderRoutingPolicy> findLatestEnabledPolicies();
+
+    List<ProviderRoutingPolicy> findLatestPolicies();
+
+    long findLatestVersion();
+
+    List<ProviderRoutingPolicy> saveAll(List<ProviderRoutingPolicy> policies);
 }

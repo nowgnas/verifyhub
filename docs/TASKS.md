@@ -10,8 +10,8 @@
 
 ## Current Snapshot
 
-- Current milestone: Milestone 7. Provider Return and Late Result
-- Next ticket: VH-027. 라우팅 정책 Admin API 구현
+- Current milestone: Milestone 8. Admin and Operations
+- Next ticket: VH-028. Internal Mock Provider API 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -349,7 +349,18 @@ Routing policy cache 후속 작업:
 
 ## Milestone 8. Admin and Operations
 
-- [ ] **VH-027. 라우팅 정책 Admin API 구현**
+- [x] **VH-027. 라우팅 정책 Admin API 구현**
+  - Done:
+    - `GET /admin/v1/routing-policies` 구현
+    - `PUT /admin/v1/routing-policies` 구현
+    - 최신 version 전체 정책 조회 구현
+    - 정책 변경 시 기존 row update 대신 next version insert 구현
+    - provider set 누락/중복과 invalid weight 검증
+    - `provider_routing_policy.version`을 business version으로 사용하도록 JPA `@Version` 제거
+    - 관리자 인증 재처리 범위와 `RetryNotAllowedException` 제거
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.routing.adapter.in.web.AdminRoutingPolicyIntegrationTest --no-daemon`
+    - `./gradlew clean test --no-daemon`
 - [~] **VH-028. Internal Mock Provider API 구현**
   - Partial:
     - `mockprovider` 패키지 골격 추가

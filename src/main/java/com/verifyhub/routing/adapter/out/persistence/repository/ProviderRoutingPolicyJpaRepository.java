@@ -18,4 +18,21 @@ public interface ProviderRoutingPolicyJpaRepository extends JpaRepository<Provid
             order by p.weight desc, p.provider asc
             """)
     List<ProviderRoutingPolicyEntity> findLatestEnabledPolicies();
+
+    @Query("""
+            select p
+            from ProviderRoutingPolicyEntity p
+            where p.version = (
+                select max(p2.version)
+                from ProviderRoutingPolicyEntity p2
+            )
+            order by p.provider asc
+            """)
+    List<ProviderRoutingPolicyEntity> findLatestPolicies();
+
+    @Query("""
+            select coalesce(max(p.version), 0)
+            from ProviderRoutingPolicyEntity p
+            """)
+    Long findLatestVersion();
 }
