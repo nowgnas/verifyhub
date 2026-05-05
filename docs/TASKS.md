@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 7. Provider Return and Late Result
-- Next ticket: VH-026. 관리자 재처리 API 구현
+- Next ticket: VH-027. 라우팅 정책 Admin API 구현
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -349,7 +349,6 @@ Routing policy cache 후속 작업:
 
 ## Milestone 8. Admin and Operations
 
-- [ ] **VH-026. 관리자 재처리 API 구현**
 - [ ] **VH-027. 라우팅 정책 Admin API 구현**
 - [~] **VH-028. Internal Mock Provider API 구현**
   - Partial:

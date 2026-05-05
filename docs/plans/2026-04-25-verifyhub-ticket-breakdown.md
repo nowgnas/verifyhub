@@ -411,21 +411,6 @@
 
 ## Milestone 8. Admin and Operations
 
-### VH-026. 관리자 재처리 API 구현
-
-**Type:** Feature  
-**Priority:** P1  
-**Dependencies:** VH-019, VH-021
-
-**Scope**
-- `POST /admin/v1/verifications/{verificationId}/retry`를 구현한다.
-- `TIMEOUT` 또는 retryable `FAIL`만 재처리 가능하게 제한한다.
-- MVP에서는 같은 verification_id로 provider call을 재수행하고 `ADMIN_RETRY_REQUESTED` 성격의 history를 남긴다.
-
-**Acceptance Criteria**
-- `SUCCESS`, `CANCELED` 상태는 재처리할 수 없다.
-- 재처리 시 provider call history가 추가된다.
-
 ### VH-027. 라우팅 정책 Admin API 구현
 
 **Type:** Feature  
@@ -615,6 +600,6 @@
 2. VH-007 ~ VH-013: DB, repository, 멱등성 완성
 3. VH-014 ~ VH-019: 라우팅, Provider, Resilience4j 완성
 4. VH-020 ~ VH-025: 사용자 API와 callback 정책 완성
-5. VH-026 ~ VH-029: Admin, Mock scenario, metrics 완성
+5. VH-027 ~ VH-029: Admin, Mock scenario, metrics 완성
 6. VH-030 ~ VH-034: 통합 테스트, docker-compose, README 완성
 7. VH-101 ~ VH-103: MVP 이후 확장
