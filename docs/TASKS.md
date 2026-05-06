@@ -11,7 +11,7 @@
 ## Current Snapshot
 
 - Current milestone: Milestone 8. Operations
-- Next ticket: VH-028. Internal Mock Provider API 구현
+- Next ticket: VH-029. Metrics 및 Actuator 구성
 - Last verified command: `./gradlew clean test --no-daemon`
 - Last verified result: `BUILD SUCCESSFUL`
 
@@ -349,8 +349,8 @@ Routing policy cache 후속 작업:
 
 ## Milestone 8. Operations
 
-- [~] **VH-028. Internal Mock Provider API 구현**
-  - Partial:
+- [x] **VH-028. Internal Mock Provider API 구현**
+  - Done:
     - `mockprovider` 패키지 골격 추가
     - KG/NICE provider client 패키지와 mock provider API 책임 분리 문서화
     - NICE 임시 endpoint 추가
@@ -360,9 +360,16 @@ Routing policy cache 후속 작업:
     - KG 임시 endpoint 추가
       - `/mock/providers/KG/goCashMain.mcash`
       - `/mock/providers/KG/noti`
-  - Remaining:
     - `/mock/providers/{provider}/scenario`
     - scenario service 구현
+    - `/mock/providers/{provider}/verifications`
+    - `/mock/providers/{provider}/results`
+    - `GET/POST /mock/providers/{provider}/returns`
+    - `SUCCESS`, `FAIL`, `TIMEOUT`, `HTTP_500`, `DELAYED_RETURN`, `DUPLICATE_RETURN`, `INVALID_INTEGRITY_RESULT` scenario 지원
+    - invalid scenario request를 400 `INVALID_REQUEST`로 처리
+  - Verification:
+    - `./gradlew test --tests com.verifyhub.mockprovider.adapter.in.web.MockPhoneAuthProviderControllerTest --no-daemon`
+    - `./gradlew clean test --no-daemon`
 
 - [~] **VH-029. Metrics 및 Actuator 구성**
   - Partial:
