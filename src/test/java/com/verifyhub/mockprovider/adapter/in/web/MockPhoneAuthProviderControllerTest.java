@@ -6,17 +6,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.verifyhub.mockprovider.application.MockProviderScenarioService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MockPhoneAuthProviderController.class)
+@Import(MockProviderScenarioService.class)
 class MockPhoneAuthProviderControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @AfterEach
+    void resetScenarios() throws Exception {
+        setScenario("KG", "SUCCESS");
+        setScenario("NICE", "SUCCESS");
+    }
 
     @Test
     void issuesNiceAuthUrlWithNiceCompatibleEndpoint() throws Exception {
@@ -74,5 +84,109 @@ class MockPhoneAuthProviderControllerTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(content().string("SUCCESS"));
+    }
+
+    @Test
+    void changesScenarioAndAppliesItToCommonVerificationAndResultEndpoints() throws Exception {
+        mockMvc.perform(post("/mock/providers/NICE/scenario")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenario": "INVALID_INTEGRITY_RESULT"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provider", is("NICE")))
+                .andExpect(jsonPath("$.scenario", is("INVALID_INTEGRITY_RESULT")));
+
+        mockMvc.perform(post("/mock/providers/NICE/verifications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "verificationId": "verif-1",
+                                  "requestId": "req-1",
+                                  "providerRequestNo": "nice-req-1",
+                                  "returnUrl": "https://verifyhub.example/api/v1/providers/NICE/returns",
+                                  "closeUrl": "https://verifyhub.example/api/v1/providers/NICE/close",
+                                  "purpose": "LOGIN",
+                                  "svcTypes": ["M"]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providerTransactionId", is("nice-tx-nice-req-1")))
+                .andExpect(jsonPath("$.providerRequestNo", is("nice-req-1")))
+                .andExpect(jsonPath("$.authEntry.type", is("REDIRECT_URL")))
+                .andExpect(jsonPath("$.resultType", is("ACCEPTED")));
+
+        mockMvc.perform(post("/mock/providers/NICE/results")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "provider": "NICE",
+                                  "providerTransactionId": "nice-tx-nice-req-1",
+                                  "providerRequestNo": "nice-req-1",
+                                  "verificationId": "verif-1",
+                                  "webTransactionId": "web-tx-1"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providerTransactionId", is("nice-tx-nice-req-1")))
+                .andExpect(jsonPath("$.verificationId", is("verif-1")))
+                .andExpect(jsonPath("$.result", is("SUCCESS")))
+                .andExpect(jsonPath("$.integrityVerified", is(false)));
+    }
+
+    @Test
+    void appliesScenarioToKgCompatibleVerificationEndpoint() throws Exception {
+        mockMvc.perform(post("/mock/providers/KG/scenario")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenario": "FAIL"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.scenario", is("FAIL")));
+
+        mockMvc.perform(post("/mock/providers/KG/goCashMain.mcash")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "verificationId": "verif-1",
+                                  "requestId": "req-1",
+                                  "providerRequestNo": "kg-trade-fail",
+                                  "returnUrl": "https://verifyhub.example/api/v1/providers/KG/noti",
+                                  "closeUrl": "https://verifyhub.example/api/v1/providers/KG/close",
+                                  "purpose": "LOGIN",
+                                  "svcTypes": ["M"]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providerTransactionId", is("kg-tx-kg-trade-fail")))
+                .andExpect(jsonPath("$.providerRequestNo", is("kg-trade-fail")))
+                .andExpect(jsonPath("$.authEntry").doesNotExist())
+                .andExpect(jsonPath("$.resultType", is("FAIL")));
+    }
+
+    @Test
+    void rejectsUnsupportedScenario() throws Exception {
+        mockMvc.perform(post("/mock/providers/KG/scenario")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "scenario": "UNKNOWN"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    private void setScenario(String provider, String scenario) throws Exception {
+        mockMvc.perform(post("/mock/providers/{provider}/scenario", provider)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "scenario": "%s"
+                        }
+                        """.formatted(scenario)));
     }
 }

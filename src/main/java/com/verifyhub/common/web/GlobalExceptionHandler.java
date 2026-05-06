@@ -7,6 +7,7 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -33,6 +34,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.INVALID_REQUEST.getHttpStatus())
                 .body(ErrorResponse.of(ErrorCode.INVALID_REQUEST, message, traceId(request)));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableMessageException(HttpMessageNotReadableException exception, HttpServletRequest request) {
+        return ResponseEntity
+                .status(ErrorCode.INVALID_REQUEST.getHttpStatus())
+                .body(ErrorResponse.of(ErrorCode.INVALID_REQUEST, ErrorCode.INVALID_REQUEST.getMessage(), traceId(request)));
     }
 
     @ExceptionHandler(Exception.class)
